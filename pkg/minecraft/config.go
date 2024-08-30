@@ -16,6 +16,7 @@ type MinecraftConfig struct {
 	MinMemory         string
 	Image             string
 	Seed              string
+	GameMode          string
 	McRunDir          string
 	dockerComposeFile string
 }
@@ -27,6 +28,7 @@ func NewMinecraftConfig() *MinecraftConfig {
 		MaxMemory: "3G",
 		MinMemory: "3G",
 		Image:     "dm0275/minecraft-server",
+		GameMode:  "0",
 	}
 }
 
@@ -37,6 +39,7 @@ func NewMinecraftForgeConfig() *MinecraftConfig {
 		MaxMemory: "3G",
 		MinMemory: "3G",
 		Image:     "dm0275/minecraft-server",
+		GameMode:  "0",
 	}
 }
 

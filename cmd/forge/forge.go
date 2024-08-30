@@ -43,4 +43,6 @@ func configureFlags(cmd *cobra.Command, mcconfig *minecraft.MinecraftConfig) {
 	cmd.Flags().StringVarP(&mcconfig.Port, "port", "", mcconfig.Port, "Server port")
 	cmd.Flags().StringVarP(&mcconfig.MinMemory, "min-memory", "", mcconfig.MinMemory, "Minimum memory limit")
 	cmd.Flags().StringVarP(&mcconfig.MaxMemory, "max-memory", "", mcconfig.MaxMemory, "Maximum memory limit")
+	cmd.Flags().StringVarP(&mcconfig.Seed, "seed", "", mcconfig.Seed, "Minecraft Seed")
+	cmd.Flags().StringVarP(&mcconfig.GameMode, "gamemode", "", "0", "Gamemode: Survival mode is gametype=0, Creative is gametype=1, Adventure is gametype=2, and Spectator is gametype=3")
 }

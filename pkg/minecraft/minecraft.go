@@ -24,7 +24,9 @@ services:
       - {{ .WorldDir }}:/opt/minecraft/world
       - {{ .ModsDir }}:/opt/minecraft/mods
     environment:
-      - GAMEMODE
+      {{if .GameMode }}
+      - GAMEMODE={{ .GameMode }}
+      {{end}}
       - MAX_PLAYERS
       - DIFFICULTY
       - MOTD
@@ -43,7 +45,9 @@ services:
       - NETWORK_COMPRESSION_THRESHOLD
       - RESOURCE_PACK_SHA1
       - MAX_WORLD_SIZE
-      - LEVEL_SEED
+      {{if .Seed }}
+      - LEVEL_SEED={{ .Seed }}
+      {{end}}
 volumes:
   world: {}
   data: {}
@@ -75,6 +79,10 @@ func StartServer(mcconfig *MinecraftConfig) error {
 			mcconfig.dockerComposeFile,
 			"up",
 			"-d",
+		},
+		Environment: map[string]string{
+			"JAVA_MIN_MEM": mcconfig.MinMemory,
+			"JAVA_MAX_MEM": mcconfig.MaxMemory,
 		},
 	}
 
