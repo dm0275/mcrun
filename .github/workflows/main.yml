@@ -17,7 +17,7 @@ jobs:
       - id: dataStep
         run: |
           set -x
-          TARGETS=$(echo '["dev", "qa", "prod"]')
+          TARGETS=$(echo '[{"environment": "dev"}, {"environment": "qa"}, {"environment": "prd"}]')
           echo "matrix=$(jq -cn --argjson environments "$TARGETS" '{include: $environments}')" >> $GITHUB_OUTPUT
   run-matrix:
     needs: setup
