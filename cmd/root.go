@@ -21,15 +21,15 @@ func NewCLI() *MinecraftRunCLI {
 	return minecraftRunCLI
 }
 
-func (w *MinecraftRunCLI) initialize() {
+func (m *MinecraftRunCLI) initialize() {
 	// Initialize the root cmd
-	w.rootCmd = &cobra.Command{
+	m.rootCmd = &cobra.Command{
 		Use:   "mcrun",
 		Short: "mcrun us a CLI used to run run dockerized Minecraft servers.",
 		Long:  `mcrun us a CLI used to run run dockerized Minecraft servers.`,
 	}
 }
 
-func (w *MinecraftRunCLI) Execute() {
-	cobra.CheckErr(w.rootCmd.Execute())
+func (m *MinecraftRunCLI) Execute() {
+	cobra.CheckErr(m.rootCmd.Execute())
 }

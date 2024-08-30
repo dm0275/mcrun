@@ -2,13 +2,13 @@ package forge
 
 import (
 	"fmt"
-	"github.com/dm0275/mcrun/pkg/config"
+	"github.com/dm0275/mcrun/pkg/minecraft"
 	"github.com/dm0275/mcrun/utils"
 	"github.com/spf13/cobra"
 )
 
 func NewForgeCmd() *cobra.Command {
-	mcConfig := config.NewMinecraftConfig()
+	mcConfig := minecraft.NewMinecraftConfig()
 	forgeCmd := &cobra.Command{
 		Use:   "forge",
 		Short: "Run a Forge server",
@@ -16,7 +16,11 @@ func NewForgeCmd() *cobra.Command {
 			fmt.Println(fmt.Sprintf("Running forge server: %s", mcConfig))
 
 			// Setup directories
-			err := config.SetupDirectories(mcConfig)
+			err := minecraft.SetupDirectories(mcConfig)
+			utils.CheckErr(err)
+
+			// Generate Compose file
+			err = minecraft.GenerateComposeFile(mcConfig)
 			utils.CheckErr(err)
 
 		},
@@ -28,13 +32,12 @@ func NewForgeCmd() *cobra.Command {
 	return forgeCmd
 }
 
-func configureFlags(cmd *cobra.Command, mcconfig *config.MinecraftConfig) {
+func configureFlags(cmd *cobra.Command, mcconfig *minecraft.MinecraftConfig) {
 	cmd.Flags().StringVarP(&mcconfig.WorldName, "world-name", "", "", "Name for the Minecraft server")
 	cmd.MarkFlagRequired("world-name")
 
 	cmd.Flags().StringVarP(&mcconfig.Version, "version", "", mcconfig.Version, "Minecraft version")
 	cmd.Flags().StringVarP(&mcconfig.Port, "port", "", mcconfig.Port, "Server port")
 	cmd.Flags().StringVarP(&mcconfig.MinMemory, "min-memory", "", mcconfig.MinMemory, "Minimum memory limit")
-	cmd.Flags().StringVarP(&mcconfig.MaxMemory, "max-memory", "", mcconfig.MaxMemory, "Maximum memory limit")
 	cmd.Flags().StringVarP(&mcconfig.MaxMemory, "max-memory", "", mcconfig.MaxMemory, "Maximum memory limit")
 }
