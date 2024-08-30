@@ -9,20 +9,8 @@ on:
       - main
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.dataStep.outputs.matrix }}
-    steps:
-      - id: dataStep
-        run: |
-          set -x
-          TARGETS=$(echo '[{"environment": "dev"}, {"environment": "qa"}, {"environment": "prd"}]')
-          echo "matrix=$(jq -cn --argjson environments "$TARGETS" '{include: $environments}')" >> $GITHUB_OUTPUT
   build:
-    needs: setup
     runs-on: ubuntu-latest
-    strategy:
-      matrix: ${{ fromJSON(needs.setup.outputs.matrix) }}
     steps:
-      - run: echo ${{matrix.environment}}
+      - uses: actions/checkout@v3
+      - run: ./gradlew build
