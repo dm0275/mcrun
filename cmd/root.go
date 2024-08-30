@@ -17,6 +17,7 @@ func NewCLI() *MinecraftRunCLI {
 	// Setup sub-commands
 	minecraftRunCLI.rootCmd.AddCommand(setup.NewSetupCmd())
 	minecraftRunCLI.rootCmd.AddCommand(forge.NewForgeCmd())
+	minecraftRunCLI.rootCmd.AddCommand(NewVersionCmd())
 
 	return minecraftRunCLI
 }
