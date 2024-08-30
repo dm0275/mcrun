@@ -16,8 +16,7 @@ jobs:
     steps:
       - id: dataStep
         run: |
-          TARGETS=$(echo '["dev", "qa", "prod"]')
-          echo "$(jq -cn --argjson environments "$TARGETS" '{targets: $environments}')" >> $GITHUB_OUTPUT
+          echo $(echo '["dev", "qa", "prod"]') >> $GITHUB_OUTPUT
   run-matrix:
     needs: setup
     runs-on: ubuntu-latest
