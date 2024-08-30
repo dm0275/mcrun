@@ -1,1 +1,5 @@
 package docker
+
+func Star() {
+
+}

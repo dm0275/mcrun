@@ -1,29 +1,38 @@
 package minecraft
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
-	"text/template"
 )
 
 type MinecraftConfig struct {
-	WorldName string
-	WorldDir  string
-	ModsDir   string
-	Version   string
-	Port      string
-	MaxMemory string
-	MinMemory string
-	Image     string
-	Seed      string
-	McRunDir  string
+	WorldName         string
+	WorldDir          string
+	ModsDir           string
+	Version           string
+	Port              string
+	MaxMemory         string
+	MinMemory         string
+	Image             string
+	Seed              string
+	McRunDir          string
+	dockerComposeFile string
 }
 
 func NewMinecraftConfig() *MinecraftConfig {
 	return &MinecraftConfig{
 		Version:   "1.18.2",
+		Port:      "25565",
+		MaxMemory: "3G",
+		MinMemory: "3G",
+		Image:     "dm0275/minecraft-server",
+	}
+}
+
+func NewMinecraftForgeConfig() *MinecraftConfig {
+	return &MinecraftConfig{
+		Version:   "forge-1.18.2",
 		Port:      "25565",
 		MaxMemory: "3G",
 		MinMemory: "3G",
@@ -71,61 +80,6 @@ func SetupDirectories(mcconfig *MinecraftConfig) error {
 	mcconfig.McRunDir = mcrunDir
 	mcconfig.WorldDir = worldDir
 	mcconfig.ModsDir = modsDir
-
-	return nil
-}
-
-func GenerateComposeFile(mcconfig *MinecraftConfig) error {
-	compose := `version: '3.8'
-
-services:
-  {{ .WorldName }}:
-    tty: true
-    stdin_open: true
-    image: "{{ .Image }}:{{ .Version }}"
-    container_name: "{{ .WorldName }}-minecraft"
-    ports:
-      - "{{ .Port }}:25565"
-    volumes:
-      - {{ .WorldDir }}:/opt/minecraft/world
-      - {{ .ModsDir }}:/opt/minecraft/mods
-    environment:
-      - GAMEMODE
-      - MAX_PLAYERS
-      - DIFFICULTY
-      - MOTD
-      - ENABLE_CMD_BLOCK
-      - MAX_TICK_TIME
-      - GENERATOR_SETTINGS
-      - ALLOW_NETHER
-      - FORCE_GAMEMODE
-      - ENABLE_QUERY
-      - PLAYER_IDLE_TIMEOUT
-      - SPAWN_MONSTERS
-      - OP_PERMISSION_LEVEL
-      - PVP
-      - LEVEL_TYPE
-      - HARDCORE
-      - NETWORK_COMPRESSION_THRESHOLD
-      - RESOURCE_PACK_SHA1
-      - MAX_WORLD_SIZE
-      - LEVEL_SEED
-volumes:
-  world: {}
-  data: {}
-  mods: {}
-`
-
-	data := &bytes.Buffer{}
-	tmpl := template.Must(template.New("").Parse(compose))
-	if err := tmpl.Execute(data, mcconfig); err != nil {
-		return err
-	}
-
-	err := os.WriteFile(fmt.Sprintf("%s/docker-compose-%s.yaml", mcconfig.McRunDir, mcconfig.WorldName), data.Bytes(), 0644)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }

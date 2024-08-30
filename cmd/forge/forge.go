@@ -8,7 +8,7 @@ import (
 )
 
 func NewForgeCmd() *cobra.Command {
-	mcConfig := minecraft.NewMinecraftConfig()
+	mcConfig := minecraft.NewMinecraftForgeConfig()
 	forgeCmd := &cobra.Command{
 		Use:   "forge",
 		Short: "Run a Forge server",
@@ -23,6 +23,9 @@ func NewForgeCmd() *cobra.Command {
 			err = minecraft.GenerateComposeFile(mcConfig)
 			utils.CheckErr(err)
 
+			// Start the server
+			err = minecraft.StartServer(mcConfig)
+			utils.CheckErr(err)
 		},
 	}
 
