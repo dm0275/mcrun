@@ -19,7 +19,7 @@ jobs:
           set -x
           TARGETS=$(echo '[{"environment": "dev"}, {"environment": "qa"}, {"environment": "prd"}]')
           echo "matrix=$(jq -cn --argjson environments "$TARGETS" '{include: $environments}')" >> $GITHUB_OUTPUT
-  run-matrix:
+  build:
     needs: setup
     runs-on: ubuntu-latest
     strategy:
