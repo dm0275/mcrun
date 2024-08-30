@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      mymatrix: ${{ steps.dataStep.outputs.myoutput }}
+    steps:
+      - id: dataStep
+        run: |
+          TARGETS=$(echo '["dev", "qa", "prod"]')
+          echo "myoutput=$(jq -cn --argjson environments "$TARGETS" '{target: $environments}')" >> $GITHUB_OUTPUT
+  run-matrix:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: ${{ fromJson(needs.setup.outputs.mymatrix) }}
+    steps:
+      - run: echo ${{matrix.target}}
