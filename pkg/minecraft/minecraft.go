@@ -8,6 +8,20 @@ import (
 	"text/template"
 )
 
+func GetComposeFile(mcconfig *MinecraftConfig) (string, error) {
+	mcRunDir, err := McRunHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	dockerComposeFilePath := fmt.Sprintf("%s/docker-compose-%s.yaml", mcRunDir, mcconfig.WorldName)
+	if !utils.FileExists(dockerComposeFilePath) {
+		return "", fmt.Errorf("docker compose file %s does not exist", dockerComposeFilePath)
+	}
+
+	return dockerComposeFilePath, nil
+}
+
 func GenerateComposeFile(mcconfig *MinecraftConfig) error {
 	dockerComposeFilePath := fmt.Sprintf("%s/docker-compose-%s.yaml", mcconfig.McRunDir, mcconfig.WorldName)
 	dockerComposeData := `version: '3.8'
@@ -83,6 +97,26 @@ func StartServer(mcconfig *MinecraftConfig) error {
 		Environment: map[string]string{
 			"JAVA_MIN_MEM": mcconfig.MinMemory,
 			"JAVA_MAX_MEM": mcconfig.MaxMemory,
+		},
+	}
+
+	out, err := utils.Exec(execCfg)
+	if err != nil {
+		fmt.Println(out)
+		return err
+	}
+
+	return nil
+}
+
+func StopServer(dockerComposeFile string) error {
+	execCfg := utils.ExecConfig{
+		Command: "docker",
+		Args: []string{
+			"compose",
+			"-f",
+			dockerComposeFile,
+			"down",
 		},
 	}
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 )
 
@@ -47,4 +48,12 @@ func Exec(config ExecConfig) (string, error) {
 	}
 
 	return output.String(), nil
+}
+
+func FileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	if err == nil {
+		return true
+	}
+	return false
 }
