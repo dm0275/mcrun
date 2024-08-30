@@ -9,5 +9,5 @@ var (
 )
 
 func Version() string {
-	return fmt.Sprintf("Version: %s\n", version)
+	return fmt.Sprintf("Version: %s", version)
 }
