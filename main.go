@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/dm0275/mcrun/cmd"
-)
+import "github.com/dm0275/mcrun/cmd"
 
 func main() {
 	core := cmd.NewCLI()

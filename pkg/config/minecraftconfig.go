@@ -14,6 +14,7 @@ type MinecraftConfig struct {
 	MaxMemory string
 	MinMemory string
 	Image     string
+	Seed      string
 }
 
 func NewMinecraftConfig() *MinecraftConfig {

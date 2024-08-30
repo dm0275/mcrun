@@ -28,7 +28,13 @@ func NewForgeCmd() *cobra.Command {
 	return forgeCmd
 }
 
-func configureFlags(cmd *cobra.Command, config *config.MinecraftConfig) {
-	cmd.Flags().StringVarP(&config.WorldName, "world-name", "", "", "Name for the Minecraft server")
+func configureFlags(cmd *cobra.Command, mcconfig *config.MinecraftConfig) {
+	cmd.Flags().StringVarP(&mcconfig.WorldName, "world-name", "", "", "Name for the Minecraft server")
 	cmd.MarkFlagRequired("world-name")
+
+	cmd.Flags().StringVarP(&mcconfig.Version, "version", "", mcconfig.Version, "Minecraft version")
+	cmd.Flags().StringVarP(&mcconfig.Port, "port", "", mcconfig.Port, "Server port")
+	cmd.Flags().StringVarP(&mcconfig.MinMemory, "min-memory", "", mcconfig.MinMemory, "Minimum memory limit")
+	cmd.Flags().StringVarP(&mcconfig.MaxMemory, "max-memory", "", mcconfig.MaxMemory, "Maximum memory limit")
+	cmd.Flags().StringVarP(&mcconfig.MaxMemory, "max-memory", "", mcconfig.MaxMemory, "Maximum memory limit")
 }
