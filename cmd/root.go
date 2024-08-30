@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/dm0275/mcrun/cmd/forge"
+	"github.com/dm0275/mcrun/cmd/setup"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +15,7 @@ func NewCLI() *MinecraftRunCLI {
 	minecraftRunCLI.initialize()
 
 	// Setup sub-commands
+	minecraftRunCLI.rootCmd.AddCommand(setup.NewSetupCmd())
 	minecraftRunCLI.rootCmd.AddCommand(forge.NewForgeCmd())
 
 	return minecraftRunCLI

@@ -1,4 +1,4 @@
-package forge
+package setup
 
 import (
 	"fmt"
@@ -7,18 +7,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewForgeCmd() *cobra.Command {
+func NewSetupCmd() *cobra.Command {
 	mcConfig := config.NewMinecraftConfig()
 	forgeCmd := &cobra.Command{
-		Use:   "forge",
-		Short: "Run a Forge server",
+		Use:   "setup",
+		Short: "Setup Minecraft server directory structure Forge server",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(fmt.Sprintf("Running forge server: %s", mcConfig))
-
-			// Setup directories
 			err := config.SetupDirectories(mcConfig)
 			utils.CheckErr(err)
-
 		},
 	}
 
