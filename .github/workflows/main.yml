@@ -12,7 +12,7 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      targets: ${{ steps.dataStep.outputs.targets }}
+      matrix: ${{ steps.dataStep.outputs.matrix }}
     steps:
       - id: dataStep
         run: |
@@ -23,6 +23,6 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     strategy:
-      matrix: ${{ fromJson(needs.setup.outputs.targets) }}
+      matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
     steps:
       - run: echo ${{matrix.target}}
