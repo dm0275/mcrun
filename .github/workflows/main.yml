@@ -16,12 +16,13 @@ jobs:
     steps:
       - id: dataStep
         run: |
-          echo $(echo '["dev", "qa", "prod"]') >> $GITHUB_OUTPUT
+          set -x
+          TARGETS=$(echo '["dev", "qa", "prod"]')
+          echo "matrix=$(jq -cn --argjson environments "$TARGETS" '{include: $environments}')" >> $GITHUB_OUTPUT
   run-matrix:
     needs: setup
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        target: ${{ fromJson(needs.setup.outputs.targets) }}
+      matrix: ${{ fromJson(needs.setup.outputs.targets) }}
     steps:
       - run: echo ${{matrix.target}}
