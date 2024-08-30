@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"github.com/dm0275/mcrun/cmd"
+)
 
 func main() {
-	fmt.Println("mcrunc")
+	core := cmd.NewCLI()
+	core.Execute()
 }
