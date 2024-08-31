@@ -49,6 +49,7 @@ Available Commands:
   forge       Configures a Minecraft Forge server instance.
   help        Help about any command
   setup       Setup Minecraft server directory structure Forge server
+  vanilla     Configures a Minecraft server (vanilla) instance.
   version     Display the current version of the mcrun CLI.
 
 ```

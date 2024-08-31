@@ -23,7 +23,7 @@ type MinecraftConfig struct {
 
 func NewMinecraftConfig() *MinecraftConfig {
 	return &MinecraftConfig{
-		Version:   "1.18.2",
+		Version:   "1.19.3",
 		Port:      "25565",
 		MaxMemory: "3G",
 		MinMemory: "3G",
@@ -34,7 +34,7 @@ func NewMinecraftConfig() *MinecraftConfig {
 
 func NewMinecraftForgeConfig() *MinecraftConfig {
 	return &MinecraftConfig{
-		Version:   "forge-1.18.2",
+		Version:   "forge-1.20.1",
 		Port:      "25565",
 		MaxMemory: "3G",
 		MinMemory: "3G",
