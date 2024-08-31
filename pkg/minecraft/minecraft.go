@@ -41,6 +41,9 @@ services:
       {{if .GameMode }}
       - GAMEMODE={{ .GameMode }}
       {{end}}
+      {{if .EnableCmdBlock }}
+      - ENABLE_CMD_BLOCK={{ .EnableCmdBlock }}
+      {{end}}
       - MAX_PLAYERS
       - DIFFICULTY
       - MOTD

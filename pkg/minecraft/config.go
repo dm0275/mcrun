@@ -17,29 +17,32 @@ type MinecraftConfig struct {
 	Image             string
 	Seed              string
 	GameMode          string
+	EnableCmdBlock    string
 	McRunDir          string
 	dockerComposeFile string
 }
 
 func NewMinecraftConfig() *MinecraftConfig {
 	return &MinecraftConfig{
-		Version:   "1.19.3",
-		Port:      "25565",
-		MaxMemory: "3G",
-		MinMemory: "3G",
-		Image:     "dm0275/minecraft-server",
-		GameMode:  "0",
+		Version:        "1.19.3",
+		Port:           "25565",
+		MaxMemory:      "3G",
+		MinMemory:      "3G",
+		Image:          "dm0275/minecraft-server",
+		GameMode:       "0",
+		EnableCmdBlock: "false",
 	}
 }
 
 func NewMinecraftForgeConfig() *MinecraftConfig {
 	return &MinecraftConfig{
-		Version:   "forge-1.20.1",
-		Port:      "25565",
-		MaxMemory: "3G",
-		MinMemory: "3G",
-		Image:     "dm0275/minecraft-server",
-		GameMode:  "0",
+		Version:        "forge-1.20.1",
+		Port:           "25565",
+		MaxMemory:      "3G",
+		MinMemory:      "3G",
+		Image:          "dm0275/minecraft-server",
+		GameMode:       "0",
+		EnableCmdBlock: "true",
 	}
 }
 
