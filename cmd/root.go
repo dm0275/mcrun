@@ -19,6 +19,8 @@ func NewCLI() *MinecraftRunCLI {
 	minecraftRunCLI.rootCmd.AddCommand(forge.NewForgeCmd())
 	minecraftRunCLI.rootCmd.AddCommand(NewVersionCmd())
 
+	minecraftRunCLI.rootCmd.CompletionOptions.DisableDefaultCmd = true
+
 	return minecraftRunCLI
 }
 
@@ -26,8 +28,8 @@ func (m *MinecraftRunCLI) initialize() {
 	// Initialize the root cmd
 	m.rootCmd = &cobra.Command{
 		Use:   "mcrun",
-		Short: "mcrun us a CLI used to run run dockerized Minecraft servers.",
-		Long:  `mcrun us a CLI used to run run dockerized Minecraft servers.`,
+		Short: "mcrun is a CLI utility for creating Minecraft servers.",
+		Long:  `mcrun is a command-line interface (CLI) utility for creating Minecraft servers.`,
 	}
 }
 
