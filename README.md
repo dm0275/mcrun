@@ -49,7 +49,7 @@ Building the CLI from source, you will need the following installed:
 
 - [Golang](https://golang.org/doc/install)
 - [Docker](https://docs.docker.com/get-docker/)
-- [Gradle](https://gradle.org/install/) (with Kotlin DSL support)
+- [Gradle](https://gradle.org/install/)
 
 1. Clone the repository:
 
