@@ -56,12 +56,13 @@ func TestNewMinecraftConfig(t *testing.T) {
 		{
 			name: "success",
 			want: &MinecraftConfig{
-				Version:   "1.19.3",
-				Port:      "25565",
-				MaxMemory: "3G",
-				MinMemory: "3G",
-				Image:     "dm0275/minecraft-server",
-				GameMode:  "0",
+				Version:        "1.19.3",
+				Port:           "25565",
+				MaxMemory:      "3G",
+				MinMemory:      "3G",
+				Image:          "dm0275/minecraft-server",
+				GameMode:       "0",
+				EnableCmdBlock: "false",
 			},
 		},
 	}
@@ -82,12 +83,13 @@ func TestNewMinecraftForgeConfig(t *testing.T) {
 		{
 			name: "success",
 			want: &MinecraftConfig{
-				Version:   "forge-1.20.1",
-				Port:      "25565",
-				MaxMemory: "3G",
-				MinMemory: "3G",
-				Image:     "dm0275/minecraft-server",
-				GameMode:  "0",
+				Version:        "forge-1.20.1",
+				Port:           "25565",
+				MaxMemory:      "3G",
+				MinMemory:      "3G",
+				Image:          "dm0275/minecraft-server",
+				GameMode:       "0",
+				EnableCmdBlock: "true",
 			},
 		},
 	}
