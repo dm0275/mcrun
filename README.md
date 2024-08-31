@@ -17,13 +17,16 @@ To use `mcrun`, you can download the built binaries from the latest release.
 1. Download the binary:
 
    ```bash
-   curl -LO https://github.com/dm0275/mcrun/releases/download/<version>/mcrun_<version>_<os>_<arch>.tar.gz
+   curl -L -o mcrun https://github.com/dm0275/mcrun/releases/download/<version>/mcrun-<os>-<arch>
+   
+   # Example
+   curl -L -o mcrun https://github.com/dm0275/mcrun/releases/download/v0.0.2/mcrun-darwin-amd64
    ```
 
-2. Extract the binary:
+2. Make the binary executable:
 
    ```bash
-   tar xzf mcrun_<version>_<os>_<arch>.tar.gz
+   chmod +x mcrun
    ```
 
 3. Run the CLI to create a new Minecraft server:
