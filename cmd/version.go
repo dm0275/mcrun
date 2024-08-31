@@ -8,7 +8,8 @@ import (
 
 func NewVersionCmd() *cobra.Command {
 	forgeCmd := &cobra.Command{
-		Use: "version",
+		Use:   "version",
+		Short: "Display the current version of the mcrun CLI.",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(version.Version())
 		},

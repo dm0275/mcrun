@@ -11,7 +11,7 @@ func NewForgeStopCmd() *cobra.Command {
 	mcConfig := minecraft.NewMinecraftForgeConfig()
 	forgeCmd := &cobra.Command{
 		Use:   "stop",
-		Short: "Stop a Forge server",
+		Short: "Shut down the  Minecraft Forge server instance.",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(fmt.Sprintf("Stopping forge server: %s", mcConfig))
 

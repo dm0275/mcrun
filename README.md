@@ -39,7 +39,19 @@ This command will pull the appropriate Docker image and create a new Minecraft s
 
 
 ### Available Commands
-TODO
+```
+mcrun is a command-line interface (CLI) utility for creating Minecraft servers.
+
+Usage:
+  mcrun [command]
+
+Available Commands:
+  forge       Configures a Minecraft Forge server instance.
+  help        Help about any command
+  setup       Setup Minecraft server directory structure Forge server
+  version     Display the current version of the mcrun CLI.
+
+```
 
 ### Building from Source
 

@@ -11,7 +11,7 @@ func NewForgeStartCmd() *cobra.Command {
 	mcConfig := minecraft.NewMinecraftForgeConfig()
 	forgeCmd := &cobra.Command{
 		Use:   "start",
-		Short: "Start a Forge server",
+		Short: "Launch a Minecraft Forge server instance.",
 		Run: func(cmd *cobra.Command, args []string) {
 			fmt.Println(fmt.Sprintf("Running forge server: %s", mcConfig))
 

@@ -7,7 +7,7 @@ import (
 func NewForgeCmd() *cobra.Command {
 	forgeCmd := &cobra.Command{
 		Use:   "forge",
-		Short: "Forge server",
+		Short: "Configures a Minecraft Forge server instance.",
 	}
 
 	// Add sub-commands
