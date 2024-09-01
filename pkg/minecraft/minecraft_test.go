@@ -19,8 +19,10 @@ func TestGenerateComposeFile(t *testing.T) {
 			name: "success",
 			args: args{
 				mcconfig: &MinecraftConfig{
-					WorldName: "server1",
-					McRunDir:  t.TempDir(),
+					WorldName:      "server1",
+					McRunDir:       t.TempDir(),
+					EnableCmdBlock: "true",
+					Seed:           "1",
 				},
 			},
 			wantErr: false,

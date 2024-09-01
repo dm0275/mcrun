@@ -8,7 +8,7 @@ plugins {
     id("com.fussionlabs.gradle.go-plugin") version("0.7.0")
 }
 
-version = "0.1.1"
+version = "0.1.2"
 val moduleName = "github.com/dm0275/mcrun"
 
 go {

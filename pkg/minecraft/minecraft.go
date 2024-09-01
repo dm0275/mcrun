@@ -38,16 +38,15 @@ services:
       - {{ .WorldDir }}:/opt/minecraft/world
       - {{ .ModsDir }}:/opt/minecraft/mods
     environment:
-      {{if .GameMode }}
+      {{- if .GameMode }}
       - GAMEMODE={{ .GameMode }}
-      {{end}}
-      {{if .EnableCmdBlock }}
+      {{- end }}
+      {{- if .EnableCmdBlock }}
       - ENABLE_CMD_BLOCK={{ .EnableCmdBlock }}
-      {{end}}
+      {{- end}}
       - MAX_PLAYERS
       - DIFFICULTY
       - MOTD
-      - ENABLE_CMD_BLOCK
       - MAX_TICK_TIME
       - GENERATOR_SETTINGS
       - ALLOW_NETHER
@@ -62,9 +61,9 @@ services:
       - NETWORK_COMPRESSION_THRESHOLD
       - RESOURCE_PACK_SHA1
       - MAX_WORLD_SIZE
-      {{if .Seed }}
+      {{- if .Seed }}
       - LEVEL_SEED={{ .Seed }}
-      {{end}}
+      {{- end}}
 volumes:
   world: {}
   data: {}
