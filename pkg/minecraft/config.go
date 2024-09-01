@@ -17,7 +17,7 @@ type MinecraftConfig struct {
 	Image             string
 	Seed              string
 	GameMode          string
-	EnableCmdBlock    string
+	EnableCmdBlock    bool
 	McRunDir          string
 	dockerComposeFile string
 }
@@ -30,7 +30,7 @@ func NewMinecraftConfig() *MinecraftConfig {
 		MinMemory:      "3G",
 		Image:          "dm0275/minecraft-server",
 		GameMode:       "0",
-		EnableCmdBlock: "false",
+		EnableCmdBlock: false,
 	}
 }
 
@@ -42,7 +42,7 @@ func NewMinecraftForgeConfig() *MinecraftConfig {
 		MinMemory:      "3G",
 		Image:          "dm0275/minecraft-server",
 		GameMode:       "0",
-		EnableCmdBlock: "true",
+		EnableCmdBlock: true,
 	}
 }
 

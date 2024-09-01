@@ -24,9 +24,7 @@ func GetComposeFile(mcconfig *MinecraftConfig) (string, error) {
 
 func GenerateComposeFile(mcconfig *MinecraftConfig) error {
 	dockerComposeFilePath := fmt.Sprintf("%s/docker-compose-%s.yaml", mcconfig.McRunDir, mcconfig.WorldName)
-	dockerComposeData := `version: '3.8'
-
-services:
+	dockerComposeData := `services:
   {{ .WorldName }}:
     tty: true
     stdin_open: true

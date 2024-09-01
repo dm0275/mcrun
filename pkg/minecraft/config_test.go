@@ -62,7 +62,7 @@ func TestNewMinecraftConfig(t *testing.T) {
 				MinMemory:      "3G",
 				Image:          "dm0275/minecraft-server",
 				GameMode:       "0",
-				EnableCmdBlock: "false",
+				EnableCmdBlock: false,
 			},
 		},
 	}
@@ -89,7 +89,7 @@ func TestNewMinecraftForgeConfig(t *testing.T) {
 				MinMemory:      "3G",
 				Image:          "dm0275/minecraft-server",
 				GameMode:       "0",
-				EnableCmdBlock: "true",
+				EnableCmdBlock: true,
 			},
 		},
 	}

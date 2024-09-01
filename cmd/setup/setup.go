@@ -13,7 +13,7 @@ func NewSetupCmd() *cobra.Command {
 		Use:   "setup",
 		Short: "Setup Minecraft server directory structure Forge server",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(fmt.Sprintf("Running forge server: %s", mcConfig))
+			fmt.Println(fmt.Sprintf("Running forge server: %s", mcConfig.WorldName))
 			err := minecraft.SetupDirectories(mcConfig)
 			utils.CheckErr(err)
 		},

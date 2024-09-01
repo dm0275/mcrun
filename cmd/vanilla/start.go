@@ -2,6 +2,7 @@ package vanilla
 
 import (
 	"fmt"
+	"github.com/dm0275/mcrun/cmd/common"
 	"github.com/dm0275/mcrun/pkg/minecraft"
 	"github.com/dm0275/mcrun/utils"
 	"github.com/spf13/cobra"
@@ -13,7 +14,7 @@ func NewStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Launch a Minecraft server instance.",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(fmt.Sprintf("Running server: %s", mcConfig))
+			fmt.Println(fmt.Sprintf("Starting server: %s", mcConfig.WorldName))
 
 			// Setup directories
 			err := minecraft.SetupDirectories(mcConfig)
@@ -36,13 +37,5 @@ func NewStartCmd() *cobra.Command {
 }
 
 func configureForgeStartFlags(cmd *cobra.Command, mcconfig *minecraft.MinecraftConfig) {
-	cmd.Flags().StringVarP(&mcconfig.WorldName, "world-name", "", "", "Name for the Minecraft server")
-	cmd.MarkFlagRequired("world-name")
-
-	cmd.Flags().StringVarP(&mcconfig.Version, "version", "", mcconfig.Version, "Minecraft version")
-	cmd.Flags().StringVarP(&mcconfig.Port, "port", "", mcconfig.Port, "Server port")
-	cmd.Flags().StringVarP(&mcconfig.MinMemory, "min-memory", "", mcconfig.MinMemory, "Minimum memory limit")
-	cmd.Flags().StringVarP(&mcconfig.MaxMemory, "max-memory", "", mcconfig.MaxMemory, "Maximum memory limit")
-	cmd.Flags().StringVarP(&mcconfig.Seed, "seed", "", mcconfig.Seed, "Minecraft Seed")
-	cmd.Flags().StringVarP(&mcconfig.GameMode, "gamemode", "", "0", "Gamemode: Survival mode is gametype=0, Creative is gametype=1, Adventure is gametype=2, and Spectator is gametype=3")
+	common.ConfigureCommonFlags(cmd, mcconfig)
 }
