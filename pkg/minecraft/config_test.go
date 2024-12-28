@@ -102,6 +102,33 @@ func TestNewMinecraftForgeConfig(t *testing.T) {
 	}
 }
 
+func TestNewMinecraftFabricConfig(t *testing.T) {
+	tests := []struct {
+		name string
+		want *MinecraftConfig
+	}{
+		{
+			name: "success",
+			want: &MinecraftConfig{
+				Version:        "fabric-1.20.1",
+				Port:           "25565",
+				MaxMemory:      "3G",
+				MinMemory:      "3G",
+				Image:          "dm0275/minecraft-server",
+				GameMode:       "0",
+				EnableCmdBlock: true,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NewMinecraftFabricConfig(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewMinecraftForgeConfig() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSetupDirectories(t *testing.T) {
 	type args struct {
 		mcconfig *MinecraftConfig
