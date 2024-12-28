@@ -13,4 +13,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: go version && ./gradlew build
+      - run: go version && ./gradlew build --info --stacktrace

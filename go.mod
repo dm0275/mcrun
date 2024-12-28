@@ -1,6 +1,6 @@
 module github.com/dm0275/mcrun
 
-go 1.21.10
+go 1.23.4
 
 require github.com/spf13/cobra v1.8.1
 
