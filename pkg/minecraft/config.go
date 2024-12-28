@@ -46,6 +46,18 @@ func NewMinecraftForgeConfig() *MinecraftConfig {
 	}
 }
 
+func NewMinecraftFabricConfig() *MinecraftConfig {
+	return &MinecraftConfig{
+		Version:        "fabric-1.20.1",
+		Port:           "25565",
+		MaxMemory:      "3G",
+		MinMemory:      "3G",
+		Image:          "dm0275/minecraft-server",
+		GameMode:       "0",
+		EnableCmdBlock: "true",
+	}
+}
+
 func McRunHomeDir() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
