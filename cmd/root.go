@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/dm0275/mcrun/cmd/fabric"
 	"github.com/dm0275/mcrun/cmd/forge"
 	"github.com/dm0275/mcrun/cmd/setup"
 	"github.com/dm0275/mcrun/cmd/vanilla"
@@ -18,6 +19,7 @@ func NewCLI() *MinecraftRunCLI {
 	// Setup sub-commands
 	minecraftRunCLI.rootCmd.AddCommand(setup.NewSetupCmd())
 	minecraftRunCLI.rootCmd.AddCommand(vanilla.NewVanillaCmd())
+	minecraftRunCLI.rootCmd.AddCommand(fabric.NewFabricCmd())
 	minecraftRunCLI.rootCmd.AddCommand(forge.NewForgeCmd())
 	minecraftRunCLI.rootCmd.AddCommand(NewVersionCmd())
 
