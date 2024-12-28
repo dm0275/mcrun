@@ -13,7 +13,7 @@ func NewFabricStopCmd() *cobra.Command {
 		Use:   "stop",
 		Short: "Shut down the Minecraft Fabric server instance.",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(fmt.Sprintf("Stopping fabric server: %v", mcConfig))
+			fmt.Println(fmt.Sprintf("Stopping fabric server: %s", mcConfig.WorldName))
 
 			// Get Compose file
 			composeFile, err := minecraft.GetComposeFile(mcConfig)

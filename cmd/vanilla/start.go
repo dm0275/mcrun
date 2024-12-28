@@ -13,7 +13,7 @@ func NewStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Launch a Minecraft server instance.",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(fmt.Sprintf("Running server: %v", mcConfig))
+			fmt.Println(fmt.Sprintf("Running server: %s", mcConfig.WorldName))
 
 			// Setup directories
 			err := minecraft.SetupDirectories(mcConfig)
