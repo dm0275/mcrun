@@ -13,7 +13,7 @@ func NewForgeStopCmd() *cobra.Command {
 		Use:   "stop",
 		Short: "Shut down the  Minecraft Forge server instance.",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(fmt.Sprintf("Stopping forge server: %s", mcConfig))
+			fmt.Println(fmt.Sprintf("Stopping forge server: %v", mcConfig))
 
 			// Get Compose file
 			composeFile, err := minecraft.GetComposeFile(mcConfig)

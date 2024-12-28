@@ -21,7 +21,7 @@ func TestGenerateComposeFile(t *testing.T) {
 				mcconfig: &MinecraftConfig{
 					WorldName:      "server1",
 					McRunDir:       t.TempDir(),
-					EnableCmdBlock: "true",
+					EnableCmdBlock: true,
 					Seed:           "1",
 				},
 			},

@@ -13,7 +13,7 @@ func NewFabricStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Launch a Minecraft Fabric server instance.",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(fmt.Sprintf("Running fabric server: %s", mcConfig))
+			fmt.Println(fmt.Sprintf("Running fabric server: %v", mcConfig))
 
 			// Setup directories
 			err := minecraft.SetupDirectories(mcConfig)
