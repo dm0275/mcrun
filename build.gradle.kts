@@ -14,5 +14,6 @@ val moduleName = "github.com/dm0275/mcrun"
 go {
     os = listOf("linux", "darwin")
     arch = listOf("amd64", "arm64")
+    goVersion = "1.21.13"
     ldFlags = mapOf("github.com/dm0275/mcrun/pkg/version.version" to "$version")
 }
