@@ -34,6 +34,7 @@ func GenerateComposeFile(mcconfig *MinecraftConfig) error {
       - "{{ .Port }}:25565"
     volumes:
       - {{ .WorldDir }}:/opt/minecraft/world
+      - {{ .ConfigDir }}:/opt/minecraft/config
       - {{ .ModsDir }}:/opt/minecraft/mods
     environment:
       {{- if .GameMode }}
@@ -65,6 +66,7 @@ func GenerateComposeFile(mcconfig *MinecraftConfig) error {
 volumes:
   world: {}
   data: {}
+  config: {}
   mods: {}
 `
 

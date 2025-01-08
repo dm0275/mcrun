@@ -10,6 +10,7 @@ type MinecraftConfig struct {
 	WorldName         string
 	WorldDir          string
 	ModsDir           string
+	ConfigDir         string
 	Version           string
 	Port              string
 	MaxMemory         string
@@ -83,9 +84,15 @@ func SetupDirectories(mcconfig *MinecraftConfig) error {
 	}
 
 	worldDir := fmt.Sprintf("%s/%s/world", mcrunDir, mcconfig.WorldName)
+	configDir := fmt.Sprintf("%s/%s/config", mcrunDir, mcconfig.WorldName)
 	modsDir := fmt.Sprintf("%s/%s/mods", mcrunDir, mcconfig.WorldName)
 
 	err = os.MkdirAll(worldDir, 0o755)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(configDir, 0o755)
 	if err != nil {
 		return err
 	}
@@ -97,6 +104,7 @@ func SetupDirectories(mcconfig *MinecraftConfig) error {
 
 	mcconfig.McRunDir = mcrunDir
 	mcconfig.WorldDir = worldDir
+	mcconfig.ConfigDir = configDir
 	mcconfig.ModsDir = modsDir
 
 	return nil
