@@ -19,6 +19,8 @@ type MinecraftConfig struct {
 	GameMode          string
 	EnableCmdBlock    bool
 	McRunDir          string
+	ServerConfigFile  string
+	LocalServerConfig bool
 	dockerComposeFile string
 }
 
@@ -98,6 +100,11 @@ func SetupDirectories(mcconfig *MinecraftConfig) error {
 	mcconfig.McRunDir = mcrunDir
 	mcconfig.WorldDir = worldDir
 	mcconfig.ModsDir = modsDir
+
+	if mcconfig.LocalServerConfig {
+		serverConfig := fmt.Sprintf("%s/%s/server.properties", mcrunDir, mcconfig.WorldName)
+		mcconfig.ServerConfigFile = serverConfig
+	}
 
 	return nil
 }
