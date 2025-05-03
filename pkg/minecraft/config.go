@@ -19,42 +19,47 @@ type MinecraftConfig struct {
 	GameMode          string
 	EnableCmdBlock    bool
 	McRunDir          string
+	ServerConfigFile  string
+	LocalServerConfig bool
 	dockerComposeFile string
 }
 
 func NewMinecraftConfig() *MinecraftConfig {
 	return &MinecraftConfig{
-		Version:        "1.19.3",
-		Port:           "25565",
-		MaxMemory:      "3G",
-		MinMemory:      "3G",
-		Image:          "dm0275/minecraft-server",
-		GameMode:       "0",
-		EnableCmdBlock: false,
+		Version:           "1.19.3",
+		Port:              "25565",
+		MaxMemory:         "3G",
+		MinMemory:         "3G",
+		Image:             "dm0275/minecraft-server",
+		GameMode:          "0",
+		EnableCmdBlock:    false,
+		LocalServerConfig: true,
 	}
 }
 
 func NewMinecraftForgeConfig() *MinecraftConfig {
 	return &MinecraftConfig{
-		Version:        "forge-1.20.1",
-		Port:           "25565",
-		MaxMemory:      "3G",
-		MinMemory:      "3G",
-		Image:          "dm0275/minecraft-server",
-		GameMode:       "0",
-		EnableCmdBlock: true,
+		Version:           "forge-1.20.1",
+		Port:              "25565",
+		MaxMemory:         "3G",
+		MinMemory:         "3G",
+		Image:             "dm0275/minecraft-server",
+		GameMode:          "0",
+		EnableCmdBlock:    true,
+		LocalServerConfig: true,
 	}
 }
 
 func NewMinecraftFabricConfig() *MinecraftConfig {
 	return &MinecraftConfig{
-		Version:        "fabric-1.20.1",
-		Port:           "25565",
-		MaxMemory:      "3G",
-		MinMemory:      "3G",
-		Image:          "dm0275/minecraft-server",
-		GameMode:       "0",
-		EnableCmdBlock: true,
+		Version:           "fabric-1.20.1",
+		Port:              "25565",
+		MaxMemory:         "3G",
+		MinMemory:         "3G",
+		Image:             "dm0275/minecraft-server",
+		GameMode:          "0",
+		EnableCmdBlock:    true,
+		LocalServerConfig: true,
 	}
 }
 
@@ -98,6 +103,11 @@ func SetupDirectories(mcconfig *MinecraftConfig) error {
 	mcconfig.McRunDir = mcrunDir
 	mcconfig.WorldDir = worldDir
 	mcconfig.ModsDir = modsDir
+
+	if mcconfig.LocalServerConfig {
+		serverConfig := fmt.Sprintf("%s/%s/server.properties", mcrunDir, mcconfig.WorldName)
+		mcconfig.ServerConfigFile = serverConfig
+	}
 
 	return nil
 }

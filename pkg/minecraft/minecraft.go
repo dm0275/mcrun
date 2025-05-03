@@ -35,7 +35,13 @@ func GenerateComposeFile(mcconfig *MinecraftConfig) error {
     volumes:
       - {{ .WorldDir }}:/opt/minecraft/world
       - {{ .ModsDir }}:/opt/minecraft/mods
+      {{- if .LocalServerConfig }}
+      - {{ .ServerConfigFile }}:/opt/minecraft/server.properties
+      {{- end }}
     environment:
+      {{- if .LocalServerConfig }}
+      - LOAD_PROPERTY_FILE=true
+      {{- end }}
       {{- if .GameMode }}
       - GAMEMODE={{ .GameMode }}
       {{- end }}

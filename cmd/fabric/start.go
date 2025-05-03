@@ -19,6 +19,12 @@ func NewFabricStartCmd() *cobra.Command {
 			err := minecraft.SetupDirectories(mcConfig)
 			utils.CheckErr(err)
 
+			// Generate server properties
+			if mcConfig.LocalServerConfig {
+				err = minecraft.GenerateServerConfig(mcConfig.ServerConfigFile)
+				utils.CheckErr(err)
+			}
+
 			// Generate Compose file
 			err = minecraft.GenerateComposeFile(mcConfig)
 			utils.CheckErr(err)
@@ -26,6 +32,8 @@ func NewFabricStartCmd() *cobra.Command {
 			// Start the server
 			err = minecraft.StartServer(mcConfig)
 			utils.CheckErr(err)
+
+			fmt.Println("Minecraft server has started ✅")
 		},
 	}
 
