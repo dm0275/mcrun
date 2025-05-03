@@ -2,6 +2,7 @@ package minecraft
 
 import (
 	"fmt"
+	"github.com/dm0275/mcrun/utils"
 	"os"
 	"reflect"
 	"strconv"
@@ -137,4 +138,17 @@ func NewServerConfig() *ServerConfig {
 		Motd:                        "Docker Minecraft Server",
 		EnableRcon:                  false,
 	}
+}
+
+func GenerateServerConfig(serverConfigFile string) error {
+	serverConfig := NewServerConfig()
+
+	if utils.FileExists(serverConfigFile) {
+		fmt.Println("Using existing server.properties file.")
+		return nil
+	}
+
+	fmt.Println("Generating new server.properties file.")
+	err := serverConfig.MarshalAndWriteToFile(serverConfigFile)
+	return err
 }
