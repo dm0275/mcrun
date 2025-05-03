@@ -101,7 +101,7 @@ func (s ServerConfig) MarshalAndWriteToFile(filePath string) error {
 	return nil
 }
 
-func DefaultServerConfig() *ServerConfig {
+func NewServerConfig() *ServerConfig {
 	return &ServerConfig{
 		MaxTickTime:                 60000,
 		AllowNether:                 true,
