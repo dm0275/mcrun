@@ -10,6 +10,7 @@ type MinecraftConfig struct {
 	WorldName         string
 	WorldDir          string
 	ModsDir           string
+	RootDir           string
 	Version           string
 	Port              string
 	MaxMemory         string
@@ -21,6 +22,7 @@ type MinecraftConfig struct {
 	McRunDir          string
 	ServerConfigFile  string
 	LocalServerConfig bool
+	MountDirs         []string
 	dockerComposeFile string
 }
 
@@ -103,6 +105,7 @@ func SetupDirectories(mcconfig *MinecraftConfig) error {
 	mcconfig.McRunDir = mcrunDir
 	mcconfig.WorldDir = worldDir
 	mcconfig.ModsDir = modsDir
+	mcconfig.RootDir = fmt.Sprintf("%s/%s", mcrunDir, mcconfig.WorldName)
 
 	if mcconfig.LocalServerConfig {
 		serverConfig := fmt.Sprintf("%s/%s/server.properties", mcrunDir, mcconfig.WorldName)

@@ -38,6 +38,11 @@ func GenerateComposeFile(mcconfig *MinecraftConfig) error {
       {{- if .LocalServerConfig }}
       - {{ .ServerConfigFile }}:/opt/minecraft/server.properties
       {{- end }}
+      {{- if .MountDirs }}
+      {{- range $index, $dir := .MountDirs }}
+      - {{ $.RootDir }}/{{ $dir }}:/opt/minecraft/{{ $dir }}
+      {{- end }}
+      {{- end }}
     environment:
       {{- if .LocalServerConfig }}
       - LOAD_PROPERTY_FILE=true
