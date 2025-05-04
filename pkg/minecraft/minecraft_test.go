@@ -7,6 +7,8 @@ import (
 )
 
 func TestGenerateComposeFile(t *testing.T) {
+	mcrunDir := t.TempDir()
+
 	type args struct {
 		mcconfig *MinecraftConfig
 	}
@@ -20,9 +22,11 @@ func TestGenerateComposeFile(t *testing.T) {
 			args: args{
 				mcconfig: &MinecraftConfig{
 					WorldName:      "server1",
-					McRunDir:       t.TempDir(),
+					McRunDir:       mcrunDir,
 					EnableCmdBlock: true,
 					Seed:           "1",
+					RootDir:        fmt.Sprintf("%s/%s", mcrunDir, "server1"),
+					//MountDirs:      []string{"one", "two"},
 				},
 			},
 			wantErr: false,
