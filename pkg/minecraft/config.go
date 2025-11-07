@@ -12,6 +12,7 @@ type MinecraftConfig struct {
 	WorldName         string
 	WorldDir          string
 	ModsDir           string
+	ModCacheDir       string
 	RootDir           string
 	Version           string
 	Port              string
@@ -116,6 +117,7 @@ func SetupDirectories(mcconfig *MinecraftConfig) error {
 	mcconfig.McRunDir = mcrunDir
 	mcconfig.WorldDir = worldDir
 	mcconfig.ModsDir = modsDir
+	mcconfig.ModCacheDir = filepath.Join(mcrunDir, "cache", "mods")
 	mcconfig.RootDir = fmt.Sprintf("%s/%s", mcrunDir, mcconfig.WorldName)
 
 	if mcconfig.LocalServerConfig {

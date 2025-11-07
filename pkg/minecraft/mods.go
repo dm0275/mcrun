@@ -3,8 +3,10 @@ package minecraft
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -61,17 +63,69 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 				fileID = resolvedID
 			}
 
-			path, err := cfClient.DownloadMod(ctx, spec.CurseForge.ProjectID, fileID, mcconfig.ModsDir)
+			cacheDir := mcconfig.ModCacheDir
+			if cacheDir == "" {
+				cacheDir = filepath.Join(mcconfig.McRunDir, "cache", "mods")
+			}
+			if err := os.MkdirAll(cacheDir, 0o755); err != nil {
+				return err
+			}
+
+			cachePath, err := cfClient.DownloadMod(ctx, spec.CurseForge.ProjectID, fileID, cacheDir)
 			if err != nil {
 				return err
 			}
-			log.Printf("Downloaded CurseForge mod to %s", path)
+
+			destPath, err := stageModFromCache(cachePath, mcconfig.ModsDir)
+			if err != nil {
+				return err
+			}
+			log.Printf("Staged CurseForge mod %s (cached at %s)", destPath, cachePath)
 		default:
 			return fmt.Errorf("unsupported mod source %q", spec.Source)
 		}
 	}
 
 	return nil
+}
+
+func stageModFromCache(cachePath, modsDir string) (string, error) {
+	fileName := filepath.Base(cachePath)
+	destPath := filepath.Join(modsDir, fileName)
+	if _, err := os.Stat(destPath); err == nil {
+		return destPath, nil
+	}
+
+	if err := os.MkdirAll(modsDir, 0o755); err != nil {
+		return "", err
+	}
+
+	if err := os.Link(cachePath, destPath); err == nil {
+		return destPath, nil
+	}
+
+	src, err := os.Open(cachePath)
+	if err != nil {
+		return "", err
+	}
+	defer src.Close()
+
+	dst, err := os.Create(destPath)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		dst.Close()
+		if err != nil {
+			os.Remove(destPath)
+		}
+	}()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return "", err
+	}
+
+	return destPath, nil
 }
 
 func deriveGameVersion(configVersion string) string {
