@@ -35,36 +35,36 @@ func NewClient(apiKey string) (*Client, error) {
 	}, nil
 }
 
-// DownloadMod fetches metadata and downloads the target file into destDir. If the
-// file already exists, the existing path is returned.
-func (c *Client) DownloadMod(ctx context.Context, projectID, fileID int, destDir string) (string, error) {
+// DownloadMod fetches metadata and downloads the target file into destDir. It
+// returns the cached file path and whether the file already existed.
+func (c *Client) DownloadMod(ctx context.Context, projectID, fileID int, destDir string) (string, bool, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
 	fileMeta, err := c.fetchFileMetadata(ctx, projectID, fileID)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	if fileMeta.FileName == "" {
-		return "", fmt.Errorf("curseforge response missing fileName for project %d file %d", projectID, fileID)
+		return "", false, fmt.Errorf("curseforge response missing fileName for project %d file %d", projectID, fileID)
 	}
 
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	destPath := filepath.Join(destDir, fileMeta.FileName)
 	if _, err := os.Stat(destPath); err == nil {
-		return destPath, nil
+		return destPath, true, nil
 	}
 
 	if err := c.downloadToPath(ctx, projectID, fileID, destPath); err != nil {
-		return "", err
+		return "", false, err
 	}
 
-	return destPath, nil
+	return destPath, false, nil
 }
 
 // ResolveFileID tries to match a file by loader + Minecraft version similar to download.sh.

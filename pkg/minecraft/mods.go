@@ -71,16 +71,21 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 				return err
 			}
 
-			cachePath, err := cfClient.DownloadMod(ctx, spec.CurseForge.ProjectID, fileID, cacheDir)
+			cachePath, cached, err := cfClient.DownloadMod(ctx, spec.CurseForge.ProjectID, fileID, cacheDir)
 			if err != nil {
 				return err
 			}
 
-			destPath, err := stageModFromCache(cachePath, mcconfig.ModsDir)
+			destPath, err := ensureModFromCache(cachePath, mcconfig.ModsDir)
 			if err != nil {
 				return err
 			}
-			log.Printf("Staged CurseForge mod %s (cached at %s)", destPath, cachePath)
+
+			if cached {
+				log.Printf("Using cached CurseForge mod %s (source %s)", destPath, cachePath)
+			} else {
+				log.Printf("Downloaded CurseForge mod %s (cached at %s)", destPath, cachePath)
+			}
 		default:
 			return fmt.Errorf("unsupported mod source %q", spec.Source)
 		}
@@ -89,7 +94,7 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 	return nil
 }
 
-func stageModFromCache(cachePath, modsDir string) (string, error) {
+func ensureModFromCache(cachePath, modsDir string) (string, error) {
 	fileName := filepath.Base(cachePath)
 	destPath := filepath.Join(modsDir, fileName)
 	if _, err := os.Stat(destPath); err == nil {
