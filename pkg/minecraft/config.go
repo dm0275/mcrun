@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/dm0275/mcrun/pkg/mods"
 )
 
 type MinecraftConfig struct {
@@ -23,6 +25,8 @@ type MinecraftConfig struct {
 	ServerConfigFile  string
 	LocalServerConfig bool
 	MountDirs         []string
+	Mods              []mods.Spec
+	CurseForgeAPIKey  string
 	dockerComposeFile string
 }
 
@@ -36,6 +40,7 @@ func NewMinecraftConfig() *MinecraftConfig {
 		GameMode:          "0",
 		EnableCmdBlock:    false,
 		LocalServerConfig: true,
+		CurseForgeAPIKey:  os.Getenv("CURSEFORGE_API_KEY"),
 	}
 }
 
@@ -49,6 +54,7 @@ func NewMinecraftForgeConfig() *MinecraftConfig {
 		GameMode:          "0",
 		EnableCmdBlock:    true,
 		LocalServerConfig: true,
+		CurseForgeAPIKey:  os.Getenv("CURSEFORGE_API_KEY"),
 	}
 }
 
@@ -62,6 +68,7 @@ func NewMinecraftFabricConfig() *MinecraftConfig {
 		GameMode:          "0",
 		EnableCmdBlock:    true,
 		LocalServerConfig: true,
+		CurseForgeAPIKey:  os.Getenv("CURSEFORGE_API_KEY"),
 	}
 }
 

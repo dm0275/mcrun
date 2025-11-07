@@ -6,24 +6,27 @@ import (
 	"strings"
 
 	"github.com/dm0275/mcrun/pkg/minecraft"
+	"github.com/dm0275/mcrun/pkg/mods"
 )
 
 var errWorldNameRequired = errors.New("worldName is required")
 
 // CreateServerRequest describes the expected JSON payload for provisioning servers.
 type CreateServerRequest struct {
-	Type              string   `json:"type"`
-	WorldName         string   `json:"worldName"`
-	Version           string   `json:"version"`
-	Port              string   `json:"port"`
-	MaxMemory         string   `json:"maxMemory"`
-	MinMemory         string   `json:"minMemory"`
-	Image             string   `json:"image"`
-	Seed              string   `json:"seed"`
-	GameMode          string   `json:"gameMode"`
-	EnableCmdBlock    *bool    `json:"enableCmdBlock"`
-	LocalServerConfig *bool    `json:"localServerConfig"`
-	MountDirs         []string `json:"mountDirs"`
+	Type              string      `json:"type"`
+	WorldName         string      `json:"worldName"`
+	Version           string      `json:"version"`
+	Port              string      `json:"port"`
+	MaxMemory         string      `json:"maxMemory"`
+	MinMemory         string      `json:"minMemory"`
+	Image             string      `json:"image"`
+	Seed              string      `json:"seed"`
+	GameMode          string      `json:"gameMode"`
+	EnableCmdBlock    *bool       `json:"enableCmdBlock"`
+	LocalServerConfig *bool       `json:"localServerConfig"`
+	MountDirs         []string    `json:"mountDirs"`
+	Mods              []mods.Spec `json:"mods"`
+	CurseForgeAPIKey  string      `json:"curseForgeApiKey"`
 }
 
 // TypeOrDefault ensures a stable value in responses.
@@ -87,6 +90,16 @@ func (r CreateServerRequest) ToMinecraftConfig() (*minecraft.MinecraftConfig, er
 	}
 	if r.LocalServerConfig != nil {
 		cfg.LocalServerConfig = *r.LocalServerConfig
+	}
+	if strings.TrimSpace(r.CurseForgeAPIKey) != "" {
+		cfg.CurseForgeAPIKey = strings.TrimSpace(r.CurseForgeAPIKey)
+	}
+	for _, modSpec := range r.Mods {
+		modSpec = modSpec.Normalized()
+		if err := modSpec.Validate(); err != nil {
+			return nil, err
+		}
+		cfg.Mods = append(cfg.Mods, modSpec)
 	}
 
 	return cfg, nil

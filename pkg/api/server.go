@@ -139,6 +139,12 @@ func (s *Server) handleCreateServer(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if err := minecraft.SyncMods(config); err != nil {
+		s.logger.Printf("failed to sync mods: %v", err)
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	if err := minecraft.GenerateComposeFile(config); err != nil {
 		s.logger.Printf("failed to create compose file: %v", err)
 		writeError(w, http.StatusInternalServerError, "failed to generate docker compose file")

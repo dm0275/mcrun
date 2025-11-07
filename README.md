@@ -8,6 +8,7 @@ The servers are run inside Docker containers and use images built by the [`minec
 - **Easy Server Creation**: Quickly spin up Minecraft servers using Docker images.
 - **Customizable**: Pass in server configurations and manage multiple instances with ease.
 - **HTTP API**: Launch an API layer and drive server lifecycle actions from other tools or a UI.
+- **Managed Mods**: Continue dropping mods into `modsDir` manually or have `mcrun` fetch them straight from CurseForge.
 
 ## Prerequisites
 * [Docker](https://docs.docker.com/get-docker/)
@@ -137,6 +138,44 @@ Error responses include:
 |-----------|--------------------------------|
 | 404       | No compose file found for world |
 | 500       | Docker compose stop failure     |
+
+## Mod Management
+
+You can keep copying `.jar` files directly into the server’s `mods` folder, or you can ask `mcrun` to download them from CurseForge during provisioning.
+
+1. Create a CurseForge API key and set it as an environment variable:
+
+   ```bash
+   export CURSEFORGE_API_KEY=<your-key>
+   ```
+
+2. Include one or more `projectID:fileID` pairs when starting servers from the CLI:
+
+   ```bash
+   ./mcrun forge start \
+     --world-name my-forge-world \
+     --curseforge-mod 238222:4712968 \
+     --curseforge-mod 306612:4712896
+   ```
+
+3. Or supply mods via the API:
+
+   ```json
+   {
+     "worldName": "my-forge-world",
+     "type": "forge",
+     "mods": [
+       {
+         "source": "curseforge",
+         "curseforge": { "projectId": 238222, "fileId": 4712968 }
+       }
+     ]
+   }
+   ```
+
+4. If you prefer to keep the key out of the environment, pass it as `--curseforge-api-key` (CLI) or `curseForgeApiKey` (API payload) per request.
+
+Existing mods inside the `mods` directory are left untouched; remote downloads are only added if the target file is missing.
 
 ### Building from Source
 
