@@ -149,13 +149,13 @@ You can keep copying `.jar` files directly into the server’s `mods` folder, or
    export CURSEFORGE_API_KEY=<your-key>
    ```
 
-2. Include one or more `projectID[:fileID][@gameVersion]` entries when starting servers from the CLI. If you omit the `fileID`, `mcrun` will use the provided (or inferred) Minecraft version and server loader to pick the right file—mirroring `download.sh` behavior.
+2. Include one or more `projectID[@gameVersion]` entries when starting servers from the CLI. If you omit `@gameVersion`, `mcrun` infers it from the server version (e.g., `forge-1.20.1` ⇒ `1.20.1`) and selects the newest compatible file. 
 
    ```bash
    ./mcrun forge start \
      --world-name my-forge-world \
      --curseforge-mod 238222@1.20.1 \
-     --curseforge-mod 306612:4712896
+     --curseforge-mod 306612
    ```
 
 3. Or supply mods via the API:

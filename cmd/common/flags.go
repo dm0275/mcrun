@@ -18,5 +18,5 @@ func ConfigureCommonFlags(cmd *cobra.Command, mcconfig *minecraft.MinecraftConfi
 	cmd.Flags().StringVarP(&mcconfig.GameMode, "gamemode", "", mcconfig.GameMode, "Gamemode: Survival mode is gametype=0, Creative is gametype=1, Adventure is gametype=2, and Spectator is gametype=3")
 	cmd.Flags().StringSliceVarP(&mcconfig.MountDirs, "mound-dirs", "", []string{}, "Specifies the local directories that should be mounted")
 	cmd.Flags().StringVar(&mcconfig.CurseForgeAPIKey, "curseforge-api-key", mcconfig.CurseForgeAPIKey, "API key for CurseForge downloads (defaults to CURSEFORGE_API_KEY env var)")
-	cmd.Flags().Var(newCurseForgeModFlag(&mcconfig.Mods), "curseforge-mod", "Fetch a mod from CurseForge using projectID[:fileID][@gameVersion] (repeatable)")
+	cmd.Flags().Var(newCurseForgeModFlag(&mcconfig.Mods), "curseforge-mod", "Fetch a mod from CurseForge using projectID[@gameVersion] (repeatable)")
 }

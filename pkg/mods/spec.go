@@ -18,7 +18,6 @@ var (
 // CurseForgeSpec represents the identifiers needed to download a CurseForge file.
 type CurseForgeSpec struct {
 	ProjectID   int    `json:"projectId"`
-	FileID      int    `json:"fileId,omitempty"`
 	GameVersion string `json:"gameVersion,omitempty"`
 	Loader      string `json:"loader,omitempty"`
 }
@@ -49,9 +48,6 @@ func (s Spec) Validate() error {
 		}
 		if s.CurseForge.ProjectID <= 0 {
 			return fmt.Errorf("curseforge mod requires a positive projectId, got %d", s.CurseForge.ProjectID)
-		}
-		if s.CurseForge.FileID <= 0 && strings.TrimSpace(s.CurseForge.GameVersion) == "" {
-			return errors.New("curseforge mods without fileId require gameVersion")
 		}
 	case "":
 		return errors.New("mod source is required")
