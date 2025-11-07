@@ -7,11 +7,13 @@ The servers are run inside Docker containers and use images built by the [`minec
 
 - **Easy Server Creation**: Quickly spin up Minecraft servers using Docker images.
 - **Customizable**: Pass in server configurations and manage multiple instances with ease.
+- **HTTP API**: Launch an API layer and drive server lifecycle actions from other tools or a UI.
 
 ## Prerequisites
 * [Docker](https://docs.docker.com/get-docker/)
 
 ## Installation & Usage
+
 To use `mcrun`, you can download the built binaries from the latest release.
 
 1. Download the binary:
@@ -39,6 +41,7 @@ This command will pull the appropriate Docker image and create a new Minecraft s
 
 
 ### Available Commands
+
 ```
 mcrun is a command-line interface (CLI) utility for creating Minecraft servers.
 
@@ -46,13 +49,94 @@ Usage:
   mcrun [command]
 
 Available Commands:
+  api         Start the HTTP API server.
+  fabric      Configures a Minecraft Fabric server instance.
   forge       Configures a Minecraft Forge server instance.
   help        Help about any command
   setup       Setup Minecraft server directory structure Forge server
   vanilla     Configures a Minecraft server (vanilla) instance.
   version     Display the current version of the mcrun CLI.
-
 ```
+
+## HTTP API
+
+Launch the API server with:
+
+```bash
+./mcrun api --host 127.0.0.1 --port 8080
+```
+
+Once running, the following endpoints are available:
+
+### `GET /healthz`
+
+Simple liveness probe.
+
+```bash
+curl http://127.0.0.1:8080/healthz
+```
+
+```json
+{"status":"ok"}
+```
+
+### `POST /servers`
+
+Create (or start) a Minecraft server. All JSON fields are optional besides `worldName`; unspecified values fall back to the defaults for the selected `type` (`vanilla`, `forge`, or `fabric`).
+
+```bash
+curl -X POST http://127.0.0.1:8080/servers \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "worldName": "my-forge-world",
+        "type": "forge",
+        "version": "forge-1.20.1",
+        "maxMemory": "4G",
+        "enableCmdBlock": true,
+        "mountDirs": ["resourcepacks"]
+      }'
+```
+
+Typical response:
+
+```json
+{
+  "status": "starting",
+  "type": "forge",
+  "worldName": "my-forge-world"
+}
+```
+
+Common error responses:
+
+| HTTP Code | Description                            |
+|-----------|----------------------------------------|
+| 400       | Invalid JSON or unsupported server type |
+| 500       | Directory/compose generation failures   |
+
+### `DELETE /servers/{worldName}`
+
+Stops the running server identified by `worldName`.
+
+```bash
+curl -X DELETE http://127.0.0.1:8080/servers/my-forge-world
+```
+
+Responses:
+
+```json
+{
+  "status": "stopping",
+  "worldName": "my-forge-world"
+}
+```
+
+Error responses include:
+
+| HTTP Code | Description                    |
+|-----------|--------------------------------|
+| 404       | No compose file found for world |
+| 500       | Docker compose stop failure     |
 
 ### Building from Source
 
