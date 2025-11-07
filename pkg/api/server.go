@@ -95,19 +95,41 @@ func (s *Server) handleServers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleServerByName(w http.ResponseWriter, r *http.Request) {
-	worldName := strings.TrimPrefix(r.URL.Path, "/servers/")
-	worldName = strings.Trim(worldName, "/")
+	path := strings.TrimPrefix(r.URL.Path, "/servers/")
+	path = strings.Trim(path, "/")
+	if path == "" {
+		writeError(w, http.StatusNotFound, "world name missing")
+		return
+	}
+
+	parts := strings.Split(path, "/")
+	worldName := parts[0]
 	if worldName == "" {
 		writeError(w, http.StatusNotFound, "world name missing")
 		return
 	}
 
-	switch r.Method {
-	case http.MethodDelete:
-		s.handleDeleteServer(w, r, worldName)
-	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	if len(parts) == 1 {
+		switch r.Method {
+		case http.MethodDelete:
+			s.handleDeleteServer(w, r, worldName)
+		default:
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		}
+		return
 	}
+
+	action := parts[1]
+	if len(parts) == 2 && action == "stop" {
+		if r.Method != http.MethodPost {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		s.handleStopServer(w, r, worldName)
+		return
+	}
+
+	writeError(w, http.StatusNotFound, "unknown server action")
 }
 
 func (s *Server) handleCreateServer(w http.ResponseWriter, r *http.Request) {
@@ -164,7 +186,7 @@ func (s *Server) handleCreateServer(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Server) handleDeleteServer(w http.ResponseWriter, r *http.Request, worldName string) {
+func (s *Server) handleStopServer(w http.ResponseWriter, r *http.Request, worldName string) {
 	defer r.Body.Close()
 
 	cfg := minecraft.NewMinecraftConfig()
@@ -189,6 +211,40 @@ func (s *Server) handleDeleteServer(w http.ResponseWriter, r *http.Request, worl
 	writeJSON(w, http.StatusAccepted, map[string]string{
 		"worldName": worldName,
 		"status":    "stopping",
+	})
+}
+
+func (s *Server) handleDeleteServer(w http.ResponseWriter, r *http.Request, worldName string) {
+	defer r.Body.Close()
+
+	cfg := minecraft.NewMinecraftConfig()
+	cfg.WorldName = worldName
+	composeFile, err := minecraft.GetComposeFile(cfg)
+	if err == nil {
+		if err := minecraft.StopServer(composeFile); err != nil {
+			s.logger.Printf("failed to stop server before delete: %v", err)
+			writeError(w, http.StatusInternalServerError, "failed to stop minecraft server")
+			return
+		}
+	} else if !errors.Is(err, os.ErrNotExist) {
+		s.logger.Printf("failed to locate compose file: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to locate server definition")
+		return
+	}
+
+	if err := minecraft.DeleteServerResources(worldName); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			writeError(w, http.StatusNotFound, fmt.Sprintf("server %s not found", worldName))
+			return
+		}
+		s.logger.Printf("failed to delete server resources: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to delete server resources")
+		return
+	}
+
+	writeJSON(w, http.StatusAccepted, map[string]string{
+		"worldName": worldName,
+		"status":    "deleted",
 	})
 }
 

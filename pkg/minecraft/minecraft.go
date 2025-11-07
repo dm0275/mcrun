@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dm0275/mcrun/utils"
 	"os"
+	"path/filepath"
 	"text/template"
 )
 
@@ -138,4 +139,30 @@ func StopServer(dockerComposeFile string) error {
 	}
 
 	return nil
+}
+
+func DeleteServerResources(worldName string) error {
+	if worldName == "" {
+		return fmt.Errorf("world name is required to delete resources")
+	}
+
+	mcRunDir, err := McRunHomeDir()
+	if err != nil {
+		return err
+	}
+
+	rootDir := filepath.Join(mcRunDir, worldName)
+	composeFile := fmt.Sprintf("%s/docker-compose-%s.yaml", mcRunDir, worldName)
+
+	if utils.FileExists(composeFile) {
+		if err := os.Remove(composeFile); err != nil {
+			return err
+		}
+	}
+
+	if utils.FileExists(rootDir) {
+		return os.RemoveAll(rootDir)
+	}
+
+	return fmt.Errorf("server directory %s does not exist: %w", rootDir, os.ErrNotExist)
 }

@@ -115,12 +115,12 @@ Common error responses:
 | 400       | Invalid JSON or unsupported server type |
 | 500       | Directory/compose generation failures   |
 
-### `DELETE /servers/{worldName}`
+### `POST /servers/{worldName}/stop`
 
-Stops the running server identified by `worldName`.
+Stops a running server without deleting any files.
 
 ```bash
-curl -X DELETE http://127.0.0.1:8080/servers/my-forge-world
+curl -X POST http://127.0.0.1:8080/servers/my-forge-world/stop
 ```
 
 Responses:
@@ -136,8 +136,32 @@ Error responses include:
 
 | HTTP Code | Description                    |
 |-----------|--------------------------------|
-| 404       | No compose file found for world |
+| 404       | Compose file not found for world |
 | 500       | Docker compose stop failure     |
+
+### `DELETE /servers/{worldName}`
+
+Deletes the server identified by `worldName`. The API attempts to stop the server first and then removes the entire world directory along with the generated compose file.
+
+```bash
+curl -X DELETE http://127.0.0.1:8080/servers/my-forge-world
+```
+
+Responses:
+
+```json
+{
+  "status": "deleted",
+  "worldName": "my-forge-world"
+}
+```
+
+Error responses include:
+
+| HTTP Code | Description                    |
+|-----------|--------------------------------|
+| 404       | Server directory not found      |
+| 500       | Stop/delete failure             |
 
 ## Mod Management
 
