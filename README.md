@@ -197,10 +197,7 @@ You can keep copying `.jar` files directly into the server’s `mods` folder, or
    }
    ```
 
-4. If you prefer to keep the key out of the environment, pass it as `--curseforge-api-key` (CLI) or `curseForgeApiKey` (API payload) per request.
-
 Existing mods inside the `mods` directory are left untouched; remote downloads are only added if the target file is missing. Downloaded files are cached under `~/.mcrun/cache/mods` and hard-linked (or copied) into each world, so repeated server creations reuse the cached artifacts.
-If auto-selection struggles (for example, snapshot builds), include an explicit `fileId` or set `loader` inside the `curseforge` object.
 
 ### Building from Source
 
