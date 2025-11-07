@@ -27,6 +27,7 @@ type MinecraftConfig struct {
 	MountDirs         []string
 	Mods              []mods.Spec
 	CurseForgeAPIKey  string
+	ServerType        string
 	dockerComposeFile string
 }
 
@@ -41,6 +42,7 @@ func NewMinecraftConfig() *MinecraftConfig {
 		EnableCmdBlock:    false,
 		LocalServerConfig: true,
 		CurseForgeAPIKey:  os.Getenv("CURSEFORGE_API_KEY"),
+		ServerType:        "vanilla",
 	}
 }
 
@@ -55,6 +57,7 @@ func NewMinecraftForgeConfig() *MinecraftConfig {
 		EnableCmdBlock:    true,
 		LocalServerConfig: true,
 		CurseForgeAPIKey:  os.Getenv("CURSEFORGE_API_KEY"),
+		ServerType:        "forge",
 	}
 }
 
@@ -69,6 +72,7 @@ func NewMinecraftFabricConfig() *MinecraftConfig {
 		EnableCmdBlock:    true,
 		LocalServerConfig: true,
 		CurseForgeAPIKey:  os.Getenv("CURSEFORGE_API_KEY"),
+		ServerType:        "fabric",
 	}
 }
 

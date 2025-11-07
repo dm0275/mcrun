@@ -24,7 +24,7 @@ func (f *curseForgeModFlag) String() string {
 	var entries []string
 	for _, spec := range *f.target {
 		if spec.SourceKey() == mods.SourceCurseForge && spec.CurseForge != nil {
-			entries = append(entries, fmt.Sprintf("%d:%d", spec.CurseForge.ProjectID, spec.CurseForge.FileID))
+			entries = append(entries, formatCurseForgeSpec(spec))
 		}
 	}
 
@@ -32,26 +32,52 @@ func (f *curseForgeModFlag) String() string {
 }
 
 func (f *curseForgeModFlag) Set(value string) error {
-	parts := strings.Split(value, ":")
-	if len(parts) != 2 {
-		return fmt.Errorf("expected format projectID:fileID, got %q", value)
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fmt.Errorf("curseforge mod cannot be empty")
 	}
 
-	projectID, err := strconv.Atoi(strings.TrimSpace(parts[0]))
-	if err != nil {
-		return fmt.Errorf("invalid projectID %q: %w", parts[0], err)
+	var (
+		gameVersion string
+		mainPart    string
+	)
+
+	if strings.Contains(value, "@") {
+		parts := strings.SplitN(value, "@", 2)
+		mainPart = parts[0]
+		gameVersion = strings.TrimSpace(parts[1])
+	} else {
+		mainPart = value
 	}
 
-	fileID, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+	idParts := strings.Split(mainPart, ":")
+	if len(idParts) == 0 {
+		return fmt.Errorf("invalid mod specification %q", value)
+	}
+
+	projectID, err := strconv.Atoi(strings.TrimSpace(idParts[0]))
 	if err != nil {
-		return fmt.Errorf("invalid fileID %q: %w", parts[1], err)
+		return fmt.Errorf("invalid projectID %q: %w", idParts[0], err)
+	}
+
+	var fileID int
+	if len(idParts) > 1 {
+		fileID, err = strconv.Atoi(strings.TrimSpace(idParts[1]))
+		if err != nil {
+			return fmt.Errorf("invalid fileID %q: %w", idParts[1], err)
+		}
+	}
+
+	if len(idParts) > 2 {
+		return fmt.Errorf("expected format projectID[:fileID][@gameVersion], got %q", value)
 	}
 
 	spec := mods.Spec{
 		Source: mods.SourceCurseForge,
 		CurseForge: &mods.CurseForgeSpec{
-			ProjectID: projectID,
-			FileID:    fileID,
+			ProjectID:   projectID,
+			FileID:      fileID,
+			GameVersion: gameVersion,
 		},
 	}
 
@@ -61,6 +87,24 @@ func (f *curseForgeModFlag) Set(value string) error {
 
 	*f.target = append(*f.target, spec)
 	return nil
+}
+
+func formatCurseForgeSpec(spec mods.Spec) string {
+	if spec.CurseForge == nil {
+		return ""
+	}
+
+	builder := strings.Builder{}
+	builder.WriteString(strconv.Itoa(spec.CurseForge.ProjectID))
+	if spec.CurseForge.FileID > 0 {
+		builder.WriteString(":")
+		builder.WriteString(strconv.Itoa(spec.CurseForge.FileID))
+	}
+	if spec.CurseForge.GameVersion != "" {
+		builder.WriteString("@")
+		builder.WriteString(spec.CurseForge.GameVersion)
+	}
+	return builder.String()
 }
 
 func (f *curseForgeModFlag) Type() string {

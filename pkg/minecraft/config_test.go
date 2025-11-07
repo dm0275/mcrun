@@ -64,6 +64,7 @@ func TestNewMinecraftConfig(t *testing.T) {
 				GameMode:          "0",
 				EnableCmdBlock:    false,
 				LocalServerConfig: true,
+				ServerType:        "vanilla",
 			},
 		},
 	}
@@ -92,6 +93,7 @@ func TestNewMinecraftForgeConfig(t *testing.T) {
 				GameMode:          "0",
 				EnableCmdBlock:    true,
 				LocalServerConfig: true,
+				ServerType:        "forge",
 			},
 		},
 	}
@@ -120,6 +122,7 @@ func TestNewMinecraftFabricConfig(t *testing.T) {
 				GameMode:          "0",
 				EnableCmdBlock:    true,
 				LocalServerConfig: true,
+				ServerType:        "fabric",
 			},
 		},
 	}

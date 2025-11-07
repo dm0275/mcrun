@@ -149,12 +149,12 @@ You can keep copying `.jar` files directly into the server’s `mods` folder, or
    export CURSEFORGE_API_KEY=<your-key>
    ```
 
-2. Include one or more `projectID:fileID` pairs when starting servers from the CLI:
+2. Include one or more `projectID[:fileID][@gameVersion]` entries when starting servers from the CLI. If you omit the `fileID`, `mcrun` will use the provided (or inferred) Minecraft version and server loader to pick the right file—mirroring `download.sh` behavior.
 
    ```bash
    ./mcrun forge start \
      --world-name my-forge-world \
-     --curseforge-mod 238222:4712968 \
+     --curseforge-mod 238222@1.20.1 \
      --curseforge-mod 306612:4712896
    ```
 
@@ -167,7 +167,7 @@ You can keep copying `.jar` files directly into the server’s `mods` folder, or
      "mods": [
        {
          "source": "curseforge",
-         "curseforge": { "projectId": 238222, "fileId": 4712968 }
+         "curseforge": { "projectId": 238222, "gameVersion": "1.20.1" }
        }
      ]
    }
@@ -176,6 +176,7 @@ You can keep copying `.jar` files directly into the server’s `mods` folder, or
 4. If you prefer to keep the key out of the environment, pass it as `--curseforge-api-key` (CLI) or `curseForgeApiKey` (API payload) per request.
 
 Existing mods inside the `mods` directory are left untouched; remote downloads are only added if the target file is missing.
+If auto-selection struggles (for example, snapshot builds), include an explicit `fileId` or set `loader` inside the `curseforge` object.
 
 ### Building from Source
 
