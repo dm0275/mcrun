@@ -16,7 +16,7 @@ func GetComposeFile(mcconfig *MinecraftConfig) (string, error) {
 
 	dockerComposeFilePath := fmt.Sprintf("%s/docker-compose-%s.yaml", mcRunDir, mcconfig.WorldName)
 	if !utils.FileExists(dockerComposeFilePath) {
-		return "", fmt.Errorf("docker compose file %s does not exist", dockerComposeFilePath)
+		return "", fmt.Errorf("docker compose file %s does not exist: %w", dockerComposeFilePath, os.ErrNotExist)
 	}
 
 	return dockerComposeFilePath, nil

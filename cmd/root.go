@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/dm0275/mcrun/cmd/api"
 	"github.com/dm0275/mcrun/cmd/fabric"
 	"github.com/dm0275/mcrun/cmd/forge"
 	"github.com/dm0275/mcrun/cmd/setup"
@@ -22,6 +23,7 @@ func NewCLI() *MinecraftRunCLI {
 	minecraftRunCLI.rootCmd.AddCommand(fabric.NewFabricCmd())
 	minecraftRunCLI.rootCmd.AddCommand(forge.NewForgeCmd())
 	minecraftRunCLI.rootCmd.AddCommand(NewVersionCmd())
+	minecraftRunCLI.rootCmd.AddCommand(api.NewAPICmd())
 
 	minecraftRunCLI.rootCmd.CompletionOptions.DisableDefaultCmd = true
 
