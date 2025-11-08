@@ -78,6 +78,10 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 				return err
 			}
 
+			if spec.Name == "" {
+				spec.Name = inferNameFromPath(cachePath)
+			}
+
 			destPath, err := ensureModFromCache(cachePath, mcconfig.ModsDir)
 			if err != nil {
 				return err
@@ -170,4 +174,13 @@ func candidateLoaders(explicitLoader, serverType string) []string {
 	default:
 		return nil
 	}
+}
+
+func inferNameFromPath(path string) string {
+	base := filepath.Base(path)
+	ext := filepath.Ext(base)
+	if ext != "" {
+		base = strings.TrimSuffix(base, ext)
+	}
+	return base
 }

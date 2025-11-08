@@ -9,6 +9,7 @@ func NewServersCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(NewListCmd())
+	cmd.AddCommand(NewDeleteCmd())
 
 	return cmd
 }
