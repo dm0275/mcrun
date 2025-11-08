@@ -25,8 +25,8 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 	var cfClient *curseforge.Client
 	ctx := context.Background()
 
-	for _, spec := range mcconfig.Mods {
-		spec = spec.Normalized()
+	for i := range mcconfig.Mods {
+		spec := mcconfig.Mods[i].Normalized()
 		if err := spec.Validate(); err != nil {
 			return err
 		}
@@ -59,6 +59,12 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 				return err
 			}
 
+			if spec.Name == "" {
+				if summary, err := cfClient.FetchModSummary(ctx, spec.CurseForge.ProjectID); err == nil {
+					spec.Name = summary.Name
+				}
+			}
+
 			cacheDir := mcconfig.ModCacheDir
 			if cacheDir == "" {
 				cacheDir = filepath.Join(mcconfig.McRunDir, "cache", "mods")
@@ -85,6 +91,8 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 		default:
 			return fmt.Errorf("unsupported mod source %q", spec.Source)
 		}
+
+		mcconfig.Mods[i] = spec
 	}
 
 	return nil

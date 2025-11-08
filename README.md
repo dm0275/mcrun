@@ -68,6 +68,8 @@ Use the CLI to see which worlds exist under the mcrun home directory:
 ./mcrun servers list
 ```
 
+The output shows type, version, mod count, compose status, and filesystem path for every world. Each server directory contains a `metadata.json` file that stores this information and is reused by the API listing endpoint.
+
 ## HTTP API
 
 Launch the API server with:
@@ -174,7 +176,7 @@ Error responses include:
 
 ### `GET /servers`
 
-Lists the directories detected under `~/.mcrun` along with a flag indicating whether a Compose file exists for each world.
+Lists the directories detected under `~/.mcrun` along with metadata such as server type, mods declared, and whether a Compose file exists.
 
 ```bash
 curl http://127.0.0.1:8080/servers
@@ -184,7 +186,24 @@ Response:
 
 ```json
 [
-  { "worldName": "my-forge-world", "path": "/Users/me/.mcrun/my-forge-world", "hasCompose": true }
+  {
+    "worldName": "my-forge-world",
+    "path": "/Users/me/.mcrun/my-forge-world",
+    "hasCompose": true,
+    "metadata": {
+      "worldName": "my-forge-world",
+      "type": "forge",
+      "version": "forge-1.20.1",
+      "mods": [
+        {
+          "source": "curseforge",
+          "curseforge": { "projectId": 238222, "gameVersion": "1.20.1" }
+        }
+      ],
+      "createdAt": "2024-07-15T17:00:00Z",
+      "updatedAt": "2024-07-15T17:05:00Z"
+    }
+  }
 ]
 ```
 

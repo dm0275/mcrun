@@ -169,6 +169,12 @@ func (s *Server) handleCreateServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := minecraft.SaveServerMetadata(config); err != nil {
+		s.logger.Printf("failed to save metadata: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to persist server metadata")
+		return
+	}
+
 	if err := minecraft.GenerateComposeFile(config); err != nil {
 		s.logger.Printf("failed to create compose file: %v", err)
 		writeError(w, http.StatusInternalServerError, "failed to generate docker compose file")

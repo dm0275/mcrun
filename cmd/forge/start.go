@@ -29,6 +29,9 @@ func NewForgeStartCmd() *cobra.Command {
 			err = minecraft.SyncMods(mcConfig)
 			utils.CheckErr(err)
 
+			err = minecraft.SaveServerMetadata(mcConfig)
+			utils.CheckErr(err)
+
 			// Generate Compose file
 			err = minecraft.GenerateComposeFile(mcConfig)
 			utils.CheckErr(err)

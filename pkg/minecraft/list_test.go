@@ -17,12 +17,23 @@ func TestListServers(t *testing.T) {
 	}
 
 	must(filepath.Join(temp, "cache"))
-	must(filepath.Join(temp, "world-one"))
+	worldOne := filepath.Join(temp, "world-one")
+	must(worldOne)
 	must(filepath.Join(temp, "world-two"))
 
 	compose := filepath.Join(temp, "docker-compose-world-one.yaml")
 	if err := os.WriteFile(compose, []byte("version: '3'"), 0o644); err != nil {
 		t.Fatalf("failed to write compose file: %v", err)
+	}
+
+	metaCfg := &MinecraftConfig{
+		WorldName:  "world-one",
+		RootDir:    worldOne,
+		Version:    "1.20.1",
+		ServerType: "forge",
+	}
+	if err := SaveServerMetadata(metaCfg); err != nil {
+		t.Fatalf("failed to save metadata: %v", err)
 	}
 
 	t.Setenv("MCRUN_DIR", temp)
@@ -38,6 +49,10 @@ func TestListServers(t *testing.T) {
 
 	if servers[0].WorldName != "world-one" || !servers[0].HasCompose {
 		t.Fatalf("unexpected first server: %+v", servers[0])
+	}
+
+	if servers[0].Metadata == nil || servers[0].Metadata.Type != "forge" {
+		t.Fatalf("expected metadata for first server, got %+v", servers[0].Metadata)
 	}
 
 	if servers[1].WorldName != "world-two" || servers[1].HasCompose {

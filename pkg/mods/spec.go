@@ -25,6 +25,7 @@ type CurseForgeSpec struct {
 // Spec describes a mod reference that mcrun can resolve before launching a server.
 type Spec struct {
 	Source     string          `json:"source"`
+	Name       string          `json:"name,omitempty"`
 	CurseForge *CurseForgeSpec `json:"curseforge,omitempty"`
 }
 

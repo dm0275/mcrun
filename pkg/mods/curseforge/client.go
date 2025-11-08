@@ -139,6 +139,10 @@ type curseForgeFile struct {
 	FileName string `json:"fileName"`
 }
 
+type modSummary struct {
+	Name string `json:"name"`
+}
+
 func (c *Client) fetchFileMetadata(ctx context.Context, projectID, fileID int) (*curseForgeFile, error) {
 	url := fmt.Sprintf("%s/mods/%d/files/%d", c.baseURL, projectID, fileID)
 
@@ -207,6 +211,37 @@ func (c *Client) downloadToPath(ctx context.Context, projectID, fileID int, dest
 	}
 
 	return os.Rename(tmpFile.Name(), destPath)
+}
+
+// FetchModSummary returns basic information about a CurseForge project.
+func (c *Client) FetchModSummary(ctx context.Context, projectID int) (*modSummary, error) {
+	url := fmt.Sprintf("%s/mods/%d", c.baseURL, projectID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	c.addHeaders(req)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<10))
+		return nil, fmt.Errorf("curseforge API error (%d): %s", resp.StatusCode, strings.TrimSpace(string(b)))
+	}
+
+	var payload struct {
+		Data modSummary `json:"data"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return nil, err
+	}
+
+	return &payload.Data, nil
 }
 
 func (c *Client) addHeaders(req *http.Request) {

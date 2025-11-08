@@ -13,9 +13,10 @@ import (
 
 // ServerInfo describes minimal metadata for a provisioned server directory.
 type ServerInfo struct {
-	WorldName  string `json:"worldName"`
-	Path       string `json:"path"`
-	HasCompose bool   `json:"hasCompose"`
+	WorldName  string          `json:"worldName"`
+	Path       string          `json:"path"`
+	HasCompose bool            `json:"hasCompose"`
+	Metadata   *ServerMetadata `json:"metadata,omitempty"`
 }
 
 // ListServers enumerates the directories under the mcrun home directory and
@@ -52,6 +53,10 @@ func ListServers() ([]ServerInfo, error) {
 
 		composeFile := fmt.Sprintf("%s/docker-compose-%s.yaml", mcRunDir, name)
 		info.HasCompose = utils.FileExists(composeFile)
+
+		if meta, err := LoadServerMetadata(info.Path); err == nil {
+			info.Metadata = meta
+		}
 
 		servers = append(servers, info)
 	}

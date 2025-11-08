@@ -22,13 +22,25 @@ func NewListCmd() *cobra.Command {
 				return nil
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "%-25s %-8s %s\n", "WORLD", "COMPOSE", "PATH")
+			fmt.Fprintf(cmd.OutOrStdout(), "%-20s %-10s %-12s %-6s %-8s %s\n", "WORLD", "TYPE", "VERSION", "MODS", "COMPOSE", "PATH")
 			for _, s := range servers {
 				compose := "no"
 				if s.HasCompose {
 					compose = "yes"
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "%-25s %-8s %s\n", s.WorldName, compose, s.Path)
+				serverType := "-"
+				version := "-"
+				modCount := 0
+				if s.Metadata != nil {
+					if s.Metadata.Type != "" {
+						serverType = s.Metadata.Type
+					}
+					if s.Metadata.Version != "" {
+						version = s.Metadata.Version
+					}
+					modCount = len(s.Metadata.Mods)
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "%-20s %-10s %-12s %-6d %-8s %s\n", s.WorldName, serverType, version, modCount, compose, s.Path)
 			}
 
 			return nil
