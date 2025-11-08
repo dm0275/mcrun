@@ -87,6 +87,8 @@ func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
 
 func (s *Server) handleServers(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
+	case http.MethodGet:
+		s.handleListServers(w, r)
 	case http.MethodPost:
 		s.handleCreateServer(w, r)
 	default:
@@ -184,6 +186,17 @@ func (s *Server) handleCreateServer(w http.ResponseWriter, r *http.Request) {
 		"status":    "starting",
 		"type":      req.TypeOrDefault(),
 	})
+}
+
+func (s *Server) handleListServers(w http.ResponseWriter, r *http.Request) {
+	servers, err := minecraft.ListServers()
+	if err != nil {
+		s.logger.Printf("failed to list servers: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to list servers")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, servers)
 }
 
 func (s *Server) handleStopServer(w http.ResponseWriter, r *http.Request, worldName string) {

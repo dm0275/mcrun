@@ -54,9 +54,18 @@ Available Commands:
   fabric      Configures a Minecraft Fabric server instance.
   forge       Configures a Minecraft Forge server instance.
   help        Help about any command
+  servers     Manage Minecraft servers.
   setup       Setup Minecraft server directory structure Forge server
   vanilla     Configures a Minecraft server (vanilla) instance.
   version     Display the current version of the mcrun CLI.
+```
+
+### Listing servers
+
+Use the CLI to see which worlds exist under the mcrun home directory:
+
+```bash
+./mcrun servers list
 ```
 
 ## HTTP API
@@ -162,6 +171,22 @@ Error responses include:
 |-----------|--------------------------------|
 | 404       | Server directory not found      |
 | 500       | Stop/delete failure             |
+
+### `GET /servers`
+
+Lists the directories detected under `~/.mcrun` along with a flag indicating whether a Compose file exists for each world.
+
+```bash
+curl http://127.0.0.1:8080/servers
+```
+
+Response:
+
+```json
+[
+  { "worldName": "my-forge-world", "path": "/Users/me/.mcrun/my-forge-world", "hasCompose": true }
+]
+```
 
 ## Mod Management
 
