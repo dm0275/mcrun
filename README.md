@@ -199,6 +199,18 @@ You can keep copying `.jar` files directly into the server’s `mods` folder, or
 
 Existing mods inside the `mods` directory are left untouched; remote downloads are only added if the target file is missing. Downloaded files are cached under `~/.mcrun/cache/mods` and hard-linked (or copied) into each world, so repeated server creations reuse the cached artifacts.
 
+## Web UI (React)
+
+A starter React + Vite frontend lives in `ui/`. It proxies API requests to the Go server and provides forms to create, stop, or delete servers.
+
+```bash
+cd ui
+npm install   # installs dependencies
+npm run dev   # starts Vite on http://localhost:5173
+```
+
+Make sure the API (`./mcrun api --host 127.0.0.1 --port 8080`) is running so the UI can reach it via the dev server proxy (`/api` → `127.0.0.1:8080`).
+
 ### Building from Source
 
 #### Prerequisites
