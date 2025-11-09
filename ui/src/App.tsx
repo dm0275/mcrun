@@ -17,6 +17,7 @@ interface CreateFormState {
   type: ServerType;
   version: string;
   maxMemory: string;
+  port: string;
   mods: string;
 }
 
@@ -25,6 +26,7 @@ const initialCreateState: CreateFormState = {
   type: 'vanilla',
   version: '',
   maxMemory: '3G',
+  port: '25565',
   mods: '',
 };
 
@@ -39,6 +41,7 @@ export default function App() {
         type: createForm.type,
         version: createForm.version.trim() || undefined,
         maxMemory: createForm.maxMemory.trim() || undefined,
+        port: createForm.port.trim() || undefined,
         curseForgeMods: createForm.mods
           .split(',')
           .map((m) => m.trim())
@@ -141,6 +144,16 @@ export default function App() {
           </label>
 
           <label>
+            Port
+            <input
+              type="text"
+              value={createForm.port}
+              onChange={(e) => setCreateForm({ ...createForm, port: e.target.value })}
+              placeholder="25565"
+            />
+          </label>
+
+          <label>
             CurseForge mods (comma separated `projectId@version`)
             <textarea
               rows={3}
@@ -190,6 +203,7 @@ export default function App() {
                 <span>World</span>
                 <span>Type</span>
                 <span>Version</span>
+                <span>Port</span>
                 <span>Mods</span>
                 <span>Status</span>
                 <span>Compose</span>
@@ -252,13 +266,14 @@ function ServerRow({
       </span>
       <span>{meta?.type ?? '—'}</span>
       <span>{meta?.version ?? '—'}</span>
+      <span>{meta?.port ?? '25565'}</span>
       <span className="mods">{mods}</span>
       <span>{server.status ?? 'unknown'}</span>
       <span>{server.hasCompose ? 'yes' : 'no'}</span>
-      <span className="actions">
+      <span className="action-buttons">
         <button
           type="button"
-          className="icon-button"
+          className="icon-button play"
           onClick={onStart}
           disabled={startBusy}
           title="Start server"

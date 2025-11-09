@@ -219,6 +219,7 @@ Response:
       "worldName": "my-forge-world",
       "type": "forge",
       "version": "forge-1.20.1",
+      "port": "25565",
       "mods": [
         {
           "source": "curseforge",

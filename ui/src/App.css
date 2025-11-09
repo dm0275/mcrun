@@ -70,6 +70,10 @@ button.danger {
   background: #1e293b;
 }
 
+.icon-button.play {
+  background: #065f46;
+}
+
 .icon-button.danger {
   background: #7f1d1d;
 }
@@ -114,7 +118,8 @@ button.danger {
 .server-table__header,
 .server-table__row {
   display: grid;
-  grid-template-columns: 1.2fr 0.6fr 0.8fr 1fr 0.6fr 0.4fr 1fr;
+  grid-template-columns: minmax(120px, 20%) minmax(70px, 10%) minmax(90px, 12%) minmax(70px, 10%)
+    minmax(200px, 25%) minmax(90px, 10%) minmax(70px, 8%) minmax(140px, 15%);
   gap: 0.75rem;
   align-items: center;
 }
@@ -127,8 +132,13 @@ button.danger {
 }
 
 .server-table__row {
-  padding: 0.5rem 0.25rem;
+  padding: 0.75rem 0.25rem;
   border-bottom: 1px solid #1f2937;
+  min-height: 3.5rem;
+}
+
+.server-table__row span:first-child {
+  overflow-wrap: anywhere;
 }
 
 .server-table__row:last-child {
@@ -148,8 +158,10 @@ button.danger {
   color: #cbd5f5;
 }
 
-.server-table__row .actions {
+.action-buttons {
+  display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 0.5rem;
 }
 
