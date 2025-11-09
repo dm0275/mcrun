@@ -91,8 +91,8 @@ export default function App() {
   return (
     <main className="app-shell">
       <header>
-        <h1>mcrun UI</h1>
-        <p>Provision, stop, delete, and inspect Minecraft servers through the HTTP API.</p>
+        <h1>MCRUN</h1>
+        <p>Provision, stop, delete, and inspect Minecraft servers.</p>
       </header>
 
       <section>
@@ -262,7 +262,6 @@ function ServerRow({
     <div className="server-table__row">
       <span>
         <strong>{server.worldName}</strong>
-        <small>{server.path}</small>
       </span>
       <span>{meta?.type ?? '—'}</span>
       <span>{meta?.version ?? '—'}</span>

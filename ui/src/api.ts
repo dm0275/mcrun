@@ -68,6 +68,7 @@ export interface ServerMetadata {
   worldName: string;
   type: string;
   version: string;
+  port: string;
   image: string;
   mods?: ModSpec[];
   createdAt: string;
