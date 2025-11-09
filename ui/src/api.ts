@@ -54,8 +54,45 @@ export function createServer(payload: CreateServerPayload) {
   });
 }
 
+export interface ServerInfo {
+  worldName: string;
+  path: string;
+  hasCompose: boolean;
+  status?: string;
+  metadata?: ServerMetadata;
+}
+
+export interface ServerMetadata {
+  worldName: string;
+  type: string;
+  version: string;
+  image: string;
+  mods?: ModSpec[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ModSpec {
+  name?: string;
+  source: string;
+  curseforge?: {
+    projectId: number;
+    gameVersion?: string;
+  };
+}
+
+export function listServers() {
+  return request<ServerInfo[]>(`/servers`);
+}
+
 export function stopServer(worldName: string) {
   return request<{ status: string }>(`/servers/${encodeURIComponent(worldName)}/stop`, {
+    method: 'POST',
+  });
+}
+
+export function startServer(worldName: string) {
+  return request<{ status: string }>(`/servers/${encodeURIComponent(worldName)}/start`, {
     method: 'POST',
   });
 }

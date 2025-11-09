@@ -131,6 +131,15 @@ func (s *Server) handleServerByName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(parts) == 2 && action == "start" {
+		if r.Method != http.MethodPost {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		s.handleStartServer(w, r, worldName)
+		return
+	}
+
 	writeError(w, http.StatusNotFound, "unknown server action")
 }
 
@@ -230,6 +239,25 @@ func (s *Server) handleStopServer(w http.ResponseWriter, r *http.Request, worldN
 	writeJSON(w, http.StatusAccepted, map[string]string{
 		"worldName": worldName,
 		"status":    "stopping",
+	})
+}
+
+func (s *Server) handleStartServer(w http.ResponseWriter, r *http.Request, worldName string) {
+	defer r.Body.Close()
+
+	if err := minecraft.StartServerFromCompose(worldName); err != nil {
+		s.logger.Printf("failed to start server: %v", err)
+		if errors.Is(err, os.ErrNotExist) {
+			writeError(w, http.StatusNotFound, fmt.Sprintf("server %s not found", worldName))
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "failed to start minecraft server")
+		return
+	}
+
+	writeJSON(w, http.StatusAccepted, map[string]string{
+		"worldName": worldName,
+		"status":    "starting",
 	})
 }
 

@@ -22,7 +22,7 @@ func NewListCmd() *cobra.Command {
 				return nil
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "%-20s %-10s %-12s %-6s %-8s %s\n", "WORLD", "TYPE", "VERSION", "MODS", "COMPOSE", "PATH")
+			fmt.Fprintf(cmd.OutOrStdout(), "%-18s %-8s %-10s %-12s %-6s %-8s %s\n", "WORLD", "STATUS", "TYPE", "VERSION", "MODS", "COMPOSE", "PATH")
 			for _, s := range servers {
 				compose := "no"
 				if s.HasCompose {
@@ -40,7 +40,7 @@ func NewListCmd() *cobra.Command {
 					}
 					modCount = len(s.Metadata.Mods)
 				}
-				fmt.Fprintf(cmd.OutOrStdout(), "%-20s %-10s %-12s %-6d %-8s %s\n", s.WorldName, serverType, version, modCount, compose, s.Path)
+				fmt.Fprintf(cmd.OutOrStdout(), "%-18s %-8s %-10s %-12s %-6d %-8s %s\n", s.WorldName, s.Status, serverType, version, modCount, compose, s.Path)
 			}
 
 			return nil

@@ -3,6 +3,8 @@ package minecraft
 import (
 	"bytes"
 	"fmt"
+	"strings"
+
 	"github.com/dm0275/mcrun/utils"
 	"os"
 	"path/filepath"
@@ -121,6 +123,38 @@ func StartServer(mcconfig *MinecraftConfig) error {
 	return nil
 }
 
+func StartServerFromCompose(worldName string) error {
+	if strings.TrimSpace(worldName) == "" {
+		return fmt.Errorf("world name is required to start server")
+	}
+
+	cfg := NewMinecraftConfig()
+	cfg.WorldName = worldName
+	composeFile, err := GetComposeFile(cfg)
+	if err != nil {
+		return err
+	}
+
+	execCfg := utils.ExecConfig{
+		Command: "docker",
+		Args: []string{
+			"compose",
+			"-f",
+			composeFile,
+			"up",
+			"-d",
+		},
+	}
+
+	out, execErr := utils.Exec(execCfg)
+	if execErr != nil {
+		fmt.Println(out)
+		return execErr
+	}
+
+	return nil
+}
+
 func StopServer(dockerComposeFile string) error {
 	execCfg := utils.ExecConfig{
 		Command: "docker",
@@ -165,4 +199,33 @@ func DeleteServerResources(worldName string) error {
 	}
 
 	return fmt.Errorf("server directory %s does not exist: %w", rootDir, os.ErrNotExist)
+}
+
+// GetServerStatus inspects the docker container backing the specified world and
+// returns the container state (running, exited, etc.). Missing containers result
+// in a "stopped" status.
+func GetServerStatus(worldName string) string {
+	if strings.TrimSpace(worldName) == "" {
+		return "unknown"
+	}
+
+	containerName := fmt.Sprintf("%s-minecraft", worldName)
+	execCfg := utils.ExecConfig{
+		Command: "docker",
+		Args:    []string{"inspect", "-f", "{{.State.Status}}", containerName},
+	}
+
+	out, err := utils.Exec(execCfg)
+	if err != nil {
+		if strings.Contains(out, "No such object") {
+			return "stopped"
+		}
+		return "unknown"
+	}
+
+	status := strings.TrimSpace(out)
+	if status == "" {
+		status = "unknown"
+	}
+	return status
 }

@@ -68,7 +68,7 @@ Use the CLI to see which worlds exist under the mcrun home directory:
 ./mcrun servers list
 ```
 
-The output shows type, version, mod count, compose status, and filesystem path for every world. Each server directory contains a `metadata.json` file that stores this information and is reused by the API listing endpoint.
+The output shows runtime status (running/stopped), type, version, mod count, compose status, and filesystem path for every world. Each server directory contains a `metadata.json` file that stores this information and is reused by the API listing endpoint.
 
 ## HTTP API
 
@@ -174,9 +174,33 @@ Error responses include:
 | 404       | Server directory not found      |
 | 500       | Stop/delete failure             |
 
+### `POST /servers/{worldName}/start`
+
+Starts an existing server (using its Docker compose file).
+
+```bash
+curl -X POST http://127.0.0.1:8080/servers/my-forge-world/start
+```
+
+Responses:
+
+```json
+{
+  "status": "starting",
+  "worldName": "my-forge-world"
+}
+```
+
+Error responses include:
+
+| HTTP Code | Description                    |
+|-----------|--------------------------------|
+| 404       | Compose file not found for world |
+| 500       | Docker compose start failure    |
+
 ### `GET /servers`
 
-Lists the directories detected under `~/.mcrun` along with metadata such as server type, mods declared, and whether a Compose file exists.
+Lists the directories detected under `~/.mcrun` along with metadata such as runtime status, server type, mods declared, and whether a Compose file exists.
 
 ```bash
 curl http://127.0.0.1:8080/servers
@@ -189,6 +213,7 @@ Response:
   {
     "worldName": "my-forge-world",
     "path": "/Users/me/.mcrun/my-forge-world",
+    "status": "running",
     "hasCompose": true,
     "metadata": {
       "worldName": "my-forge-world",

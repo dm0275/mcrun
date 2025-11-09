@@ -16,6 +16,7 @@ type ServerInfo struct {
 	WorldName  string          `json:"worldName"`
 	Path       string          `json:"path"`
 	HasCompose bool            `json:"hasCompose"`
+	Status     string          `json:"status"`
 	Metadata   *ServerMetadata `json:"metadata,omitempty"`
 }
 
@@ -53,6 +54,7 @@ func ListServers() ([]ServerInfo, error) {
 
 		composeFile := fmt.Sprintf("%s/docker-compose-%s.yaml", mcRunDir, name)
 		info.HasCompose = utils.FileExists(composeFile)
+		info.Status = GetServerStatus(name)
 
 		if meta, err := LoadServerMetadata(info.Path); err == nil {
 			info.Metadata = meta

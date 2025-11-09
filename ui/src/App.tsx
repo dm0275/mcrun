@@ -1,6 +1,15 @@
 import { FormEvent, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { createServer, deleteServer, stopServer, ServerType } from './api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  createServer,
+  deleteServer,
+  listServers,
+  ServerInfo,
+  ServerMetadata,
+  ServerType,
+  startServer,
+  stopServer,
+} from './api';
 import './App.css';
 
 interface CreateFormState {
@@ -21,7 +30,7 @@ const initialCreateState: CreateFormState = {
 
 export default function App() {
   const [createForm, setCreateForm] = useState<CreateFormState>(initialCreateState);
-  const [manageWorldName, setManageWorldName] = useState('');
+  const queryClient = useQueryClient();
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -35,14 +44,35 @@ export default function App() {
           .map((m) => m.trim())
           .filter(Boolean),
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+    },
+  });
+
+  const startMutation = useMutation({
+    mutationFn: (worldName: string) => startServer(worldName.trim()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+    },
   });
 
   const stopMutation = useMutation({
-    mutationFn: () => stopServer(manageWorldName.trim()),
+    mutationFn: (worldName: string) => stopServer(worldName.trim()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+    },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => deleteServer(manageWorldName.trim()),
+    mutationFn: (worldName: string) => deleteServer(worldName.trim()),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+    },
+  });
+
+  const serversQuery = useQuery({
+    queryKey: ['servers'],
+    queryFn: listServers,
   });
 
   const onSubmitCreate = (event: FormEvent) => {
@@ -55,14 +85,11 @@ export default function App() {
     });
   };
 
-  const busy =
-    createMutation.isPending || stopMutation.isPending || deleteMutation.isPending;
-
   return (
     <main className="app-shell">
       <header>
         <h1>mcrun UI</h1>
-        <p>Provision, stop, or delete Minecraft servers through the HTTP API.</p>
+        <p>Provision, stop, delete, and inspect Minecraft servers through the HTTP API.</p>
       </header>
 
       <section>
@@ -139,46 +166,155 @@ export default function App() {
       </section>
 
       <section>
-        <h2>Manage existing server</h2>
+        <div className="servers-header">
+          <h2>Existing servers</h2>
+          <button
+            type="button"
+            disabled={serversQuery.isRefetching}
+            onClick={() => serversQuery.refetch()}
+          >
+            {serversQuery.isRefetching ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
         <div className="card">
-          <label>
-            World name
-            <input
-              type="text"
-              value={manageWorldName}
-              onChange={(e) => setManageWorldName(e.target.value)}
-              placeholder="my-awesome-world"
-            />
-          </label>
-          <div className="actions">
-            <button
-              onClick={() => stopMutation.mutate()}
-              disabled={!manageWorldName || stopMutation.isPending}
-            >
-              {stopMutation.isPending ? 'Stopping…' : 'Stop server'}
-            </button>
-            <button
-              className="danger"
-              onClick={() => deleteMutation.mutate()}
-              disabled={!manageWorldName || deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? 'Deleting…' : 'Delete server'}
-            </button>
-          </div>
-
-          {busy && <p className="info">Working…</p>}
-          {stopMutation.isError && <p className="error">{stopMutation.error.message}</p>}
-          {deleteMutation.isError && (
-            <p className="error">{deleteMutation.error.message}</p>
+          {serversQuery.isLoading && <p className="info">Loading servers…</p>}
+          {serversQuery.isError && (
+            <p className="error">{(serversQuery.error as Error).message}</p>
           )}
-          {stopMutation.isSuccess && (
-            <p className="success">Server {manageWorldName} is stopping</p>
+          {serversQuery.isSuccess && serversQuery.data.length === 0 && (
+            <p className="info">No servers found.</p>
           )}
-          {deleteMutation.isSuccess && (
-            <p className="success">Server {manageWorldName} deleted</p>
+          {serversQuery.isSuccess && serversQuery.data.length > 0 && (
+            <div className="server-table">
+              <div className="server-table__header">
+                <span>World</span>
+                <span>Type</span>
+                <span>Version</span>
+                <span>Mods</span>
+                <span>Status</span>
+                <span>Compose</span>
+                <span>Actions</span>
+              </div>
+              {serversQuery.data.map((server) => (
+                <ServerRow
+                  key={server.worldName}
+                  server={server}
+                  onStart={() => startMutation.mutate(server.worldName)}
+                  onStop={() => stopMutation.mutate(server.worldName)}
+                  onDelete={() => deleteMutation.mutate(server.worldName)}
+                  startBusy={
+                    startMutation.isPending && startMutation.variables === server.worldName
+                  }
+                  stopBusy={stopMutation.isPending && stopMutation.variables === server.worldName}
+                  deleteBusy={
+                    deleteMutation.isPending && deleteMutation.variables === server.worldName
+                  }
+                />
+              ))}
+            </div>
           )}
         </div>
       </section>
     </main>
   );
 }
+
+interface ServerRowProps {
+  server: ServerInfo;
+  onStart: () => void;
+  onStop: () => void;
+  onDelete: () => void;
+  startBusy: boolean;
+  stopBusy: boolean;
+  deleteBusy: boolean;
+}
+
+function ServerRow({
+  server,
+  onStart,
+  onStop,
+  onDelete,
+  startBusy,
+  stopBusy,
+  deleteBusy,
+}: ServerRowProps) {
+  const meta: ServerMetadata | undefined = server.metadata;
+  const mods =
+    meta?.mods && meta.mods.length > 0
+      ? meta.mods.map((m) => m.name || `#${m.curseforge?.projectId ?? '-'}`).join(', ')
+      : '—';
+
+  return (
+    <div className="server-table__row">
+      <span>
+        <strong>{server.worldName}</strong>
+        <small>{server.path}</small>
+      </span>
+      <span>{meta?.type ?? '—'}</span>
+      <span>{meta?.version ?? '—'}</span>
+      <span className="mods">{mods}</span>
+      <span>{server.status ?? 'unknown'}</span>
+      <span>{server.hasCompose ? 'yes' : 'no'}</span>
+      <span className="actions">
+        <button
+          type="button"
+          className="icon-button"
+          onClick={onStart}
+          disabled={startBusy}
+          title="Start server"
+        >
+          {startBusy ? SpinnerIcon : PlayIcon}
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          onClick={onStop}
+          disabled={stopBusy}
+          title="Stop server"
+        >
+          {stopBusy ? SpinnerIcon : StopIcon}
+        </button>
+        <button
+          type="button"
+          className="icon-button danger"
+          onClick={onDelete}
+          disabled={deleteBusy}
+          title="Delete server"
+        >
+          {deleteBusy ? SpinnerIcon : TrashIcon}
+        </button>
+      </span>
+    </div>
+  );
+}
+
+const PlayIcon = (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path fill="currentColor" d="M8 5v14l11-7z" />
+  </svg>
+);
+
+const StopIcon = (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path fill="currentColor" d="M6 6h12v12H6z" />
+  </svg>
+);
+
+const TrashIcon = (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path
+      fill="currentColor"
+      d="M9 3h6l1 1h4v2H4V4h4l1-1zm1 6h2v8h-2V9zm4 0h2v8h-2V9zM6 7h12v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7z"
+    />
+  </svg>
+);
+
+const SpinnerIcon = (
+  <svg viewBox="0 0 24 24" width="18" height="18" className="spin" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" opacity="0.25" />
+    <path
+      fill="currentColor"
+      d="M22 12a10 10 0 0 1-10 10v-4a6 6 0 0 0 6-6h4z"
+    />
+  </svg>
+);
