@@ -309,7 +309,6 @@ function ServerRow({
     <div className="server-table__row">
       <span>
         <strong className="world-name">{server.worldName}</strong>
-        {server.path && <small>{server.path}</small>}
       </span>
       <span><span className={typeClass}>{meta?.type ?? '—'}</span></span>
       <span className="version">{meta?.version ?? '—'}</span>
