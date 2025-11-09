@@ -21,6 +21,9 @@ func NewFabricStartCmd() *cobra.Command {
 			err := minecraft.SetupDirectories(mcConfig)
 			utils.CheckErr(err)
 
+			err = minecraft.EnsurePortAvailable(mcConfig.Port, mcConfig.WorldName)
+			utils.CheckErr(err)
+
 			// Generate server properties
 			if mcConfig.LocalServerConfig {
 				err = minecraft.GenerateServerConfig(mcConfig.ServerConfigFile)

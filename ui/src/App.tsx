@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createServer,
@@ -33,6 +33,7 @@ const initialCreateState: CreateFormState = {
 export default function App() {
   const [createForm, setCreateForm] = useState<CreateFormState>(initialCreateState);
   const queryClient = useQueryClient();
+  const [portError, setPortError] = useState<string | null>(null);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -49,6 +50,7 @@ export default function App() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
+      setPortError(null);
     },
   });
 
@@ -78,9 +80,31 @@ export default function App() {
     queryFn: listServers,
   });
 
+  const findPortConflict = useMemo(() => {
+    return (port: string, excludeWorld?: string) => {
+      if (!serversQuery.data) {
+        return undefined;
+      }
+      const normalized = port.trim();
+      return serversQuery.data.find(
+        (server) =>
+          server.status === 'running' &&
+          server.metadata?.port === normalized &&
+          server.worldName !== excludeWorld,
+      );
+    };
+  }, [serversQuery.data]);
+
   const onSubmitCreate = (event: FormEvent) => {
     event.preventDefault();
+    setPortError(null);
     if (!createForm.worldName.trim()) {
+      return;
+    }
+    const desiredPort = createForm.port.trim() || '25565';
+    const conflict = findPortConflict(desiredPort);
+    if (conflict) {
+      setPortError(`Port ${desiredPort} is already used by ${conflict.worldName}. Stop it first.`);
       return;
     }
     createMutation.mutate(undefined, {
@@ -156,10 +180,16 @@ export default function App() {
             <input
               type="text"
               value={createForm.port}
-              onChange={(e) => setCreateForm({ ...createForm, port: e.target.value })}
+              onChange={(e) => {
+                setCreateForm({ ...createForm, port: e.target.value });
+                if (portError) {
+                  setPortError(null);
+                }
+              }}
               placeholder="25565"
             />
           </label>
+          {portError && <p className="error">{portError}</p>}
 
           <label>
             CurseForge mods (comma separated `projectId@version`)
@@ -267,6 +297,11 @@ export default function App() {
                   deleteBusy={
                     deleteMutation.isPending && deleteMutation.variables === server.worldName
                   }
+                  portConflict={
+                    server.metadata?.port
+                      ? findPortConflict(server.metadata.port, server.worldName)
+                      : undefined
+                  }
                 />
               ))}
             </div>
@@ -285,6 +320,7 @@ interface ServerRowProps {
   startBusy: boolean;
   stopBusy: boolean;
   deleteBusy: boolean;
+  portConflict?: ServerInfo;
 }
 
 function ServerRow({
@@ -295,6 +331,7 @@ function ServerRow({
   startBusy,
   stopBusy,
   deleteBusy,
+  portConflict,
 }: ServerRowProps) {
   const meta: ServerMetadata | undefined = server.metadata;
   const mods =
@@ -304,6 +341,11 @@ function ServerRow({
 
   const statusClass = server.status === 'running' ? 'status-running' : server.status === 'stopped' ? 'status-stopped' : 'status-unknown';
   const typeClass = meta?.type ? `type-badge type-${meta.type}` : 'type-badge';
+
+  const startDisabled = startBusy || Boolean(portConflict);
+  const startTitle = portConflict
+    ? `Port ${meta?.port ?? '25565'} used by ${portConflict.worldName}`
+    : 'Start server';
 
   return (
     <div className="server-table__row">
@@ -321,8 +363,8 @@ function ServerRow({
           type="button"
           className="icon-button play"
           onClick={onStart}
-          disabled={startBusy}
-          title="Start server"
+          disabled={startDisabled}
+          title={startTitle}
         >
           {startBusy ? SpinnerIcon : PlayIcon}
         </button>

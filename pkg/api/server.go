@@ -158,6 +158,11 @@ func (s *Server) handleCreateServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := minecraft.EnsurePortAvailable(config.Port, config.WorldName); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	if err := minecraft.SetupDirectories(config); err != nil {
 		s.logger.Printf("failed to setup directories: %v", err)
 		writeError(w, http.StatusInternalServerError, "failed to prepare server directories")
