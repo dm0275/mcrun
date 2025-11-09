@@ -90,14 +90,22 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <header>
-        <h1>MCRUN</h1>
-        <p>Provision, stop, delete, and inspect Minecraft servers.</p>
+      <header className="app-header">
+        <div className="header-content">
+          <h1 className="app-title">
+            <span className="title-icon">⚙️</span>
+            MCRUN
+          </h1>
+          <p className="header-description">Manage your Minecraft servers with ease</p>
+        </div>
       </header>
 
       <section>
-        <h2>Create server</h2>
-        <form className="card" onSubmit={onSubmitCreate}>
+        <h2 className="section-title">
+          <span className="section-icon">➕</span>
+          Create New Server
+        </h2>
+        <form className="card create-form" onSubmit={onSubmitCreate}>
           <label>
             World name
             <input
@@ -163,8 +171,18 @@ export default function App() {
             />
           </label>
 
-          <button type="submit" disabled={createMutation.isPending}>
-            {createMutation.isPending ? 'Creating…' : 'Create server'}
+          <button type="submit" className="btn-primary" disabled={createMutation.isPending}>
+            {createMutation.isPending ? (
+              <>
+                <span className="spinner-small"></span>
+                Creating server…
+              </>
+            ) : (
+              <>
+                <span>🚀</span>
+                Create server
+              </>
+            )}
           </button>
 
           {createMutation.isError && (
@@ -180,22 +198,48 @@ export default function App() {
 
       <section>
         <div className="servers-header">
-          <h2>Existing servers</h2>
+          <h2 className="section-title">
+            <span className="section-icon">🖥️</span>
+            Server Dashboard
+          </h2>
           <button
             type="button"
+            className="btn-refresh"
             disabled={serversQuery.isRefetching}
             onClick={() => serversQuery.refetch()}
+            title="Refresh server list"
           >
-            {serversQuery.isRefetching ? 'Refreshing…' : 'Refresh'}
+            {serversQuery.isRefetching ? (
+              <>
+                <span className="spinner-small"></span>
+                Refreshing…
+              </>
+            ) : (
+              <>
+                <span>🔄</span>
+                Refresh
+              </>
+            )}
           </button>
         </div>
         <div className="card">
-          {serversQuery.isLoading && <p className="info">Loading servers…</p>}
+          {serversQuery.isLoading && (
+            <div className="empty-state">
+              <span className="empty-icon">⏳</span>
+              <p className="info">Loading servers…</p>
+            </div>
+          )}
           {serversQuery.isError && (
-            <p className="error">{(serversQuery.error as Error).message}</p>
+            <div className="empty-state">
+              <span className="empty-icon">❌</span>
+              <p className="error">{(serversQuery.error as Error).message}</p>
+            </div>
           )}
           {serversQuery.isSuccess && serversQuery.data.length === 0 && (
-            <p className="info">No servers found.</p>
+            <div className="empty-state">
+              <span className="empty-icon">📦</span>
+              <p className="info">No servers found. Create your first server to get started!</p>
+            </div>
           )}
           {serversQuery.isSuccess && serversQuery.data.length > 0 && (
             <div className="server-table">
@@ -258,17 +302,21 @@ function ServerRow({
       ? meta.mods.map((m) => m.name || `#${m.curseforge?.projectId ?? '-'}`).join(', ')
       : '—';
 
+  const statusClass = server.status === 'running' ? 'status-running' : server.status === 'stopped' ? 'status-stopped' : 'status-unknown';
+  const typeClass = meta?.type ? `type-badge type-${meta.type}` : 'type-badge';
+
   return (
     <div className="server-table__row">
       <span>
-        <strong>{server.worldName}</strong>
+        <strong className="world-name">{server.worldName}</strong>
+        {server.path && <small>{server.path}</small>}
       </span>
-      <span>{meta?.type ?? '—'}</span>
-      <span>{meta?.version ?? '—'}</span>
-      <span>{meta?.port ?? '25565'}</span>
+      <span><span className={typeClass}>{meta?.type ?? '—'}</span></span>
+      <span className="version">{meta?.version ?? '—'}</span>
+      <span className="port">{meta?.port ?? '25565'}</span>
       <span className="mods">{mods}</span>
-      <span>{server.status ?? 'unknown'}</span>
-      <span>{server.hasCompose ? 'yes' : 'no'}</span>
+      <span><span className={`status-badge ${statusClass}`}>{server.status ?? 'unknown'}</span></span>
+      <span>{server.hasCompose ? <span className="compose-badge">✓</span> : '—'}</span>
       <span className="action-buttons">
         <button
           type="button"
