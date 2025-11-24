@@ -27,12 +27,27 @@ interface CreateFormState {
 interface UpdateServerInput {
   worldName: string;
   maxMemory?: string;
-  mods: string[];
+  mods: ModInput[];
 }
 
 interface EditFormState {
   maxMemory: string;
-  mods: string;
+  mods: ModInput[];
+  newMod: ModDraft;
+  addError: string | null;
+}
+
+interface ModInput {
+  projectId: number;
+  fileId?: number;
+  version?: string;
+  name?: string;
+}
+
+interface ModDraft {
+  projectId: string;
+  fileId: string;
+  version: string;
 }
 
 const initialCreateState: CreateFormState = {
@@ -92,7 +107,7 @@ export default function App() {
       updateServer({
         worldName: payload.worldName,
         maxMemory: payload.maxMemory,
-        curseForgeMods: payload.mods,
+        curseForgeMods: payload.mods.map(formatModInput),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
@@ -429,10 +444,59 @@ function ServerRow({
     setEditForm(buildEditFormState(meta));
   };
 
+  const handleRemoveMod = (index: number) => {
+    setEditForm((prev) => ({
+      ...prev,
+      mods: prev.mods.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleAddMod = () => {
+    const projectId = Number(editForm.newMod.projectId.trim());
+    const fileIdStr = editForm.newMod.fileId.trim();
+    const version = editForm.newMod.version.trim();
+
+    if (!Number.isInteger(projectId) || projectId <= 0) {
+      setEditForm((prev) => ({ ...prev, addError: 'Project ID must be a positive number' }));
+      return;
+    }
+
+    let fileId: number | undefined;
+    if (fileIdStr) {
+      const parsedFileId = Number(fileIdStr);
+      if (!Number.isInteger(parsedFileId) || parsedFileId <= 0) {
+        setEditForm((prev) => ({ ...prev, addError: 'File ID must be a positive number' }));
+        return;
+      }
+      fileId = parsedFileId;
+    }
+
+    const duplicate = editForm.mods.find(
+      (mod) => mod.projectId === projectId && (fileId ? mod.fileId === fileId : true),
+    );
+    if (duplicate) {
+      setEditForm((prev) => ({ ...prev, addError: 'Mod already added' }));
+      return;
+    }
+
+    const newMod: ModInput = {
+      projectId,
+      fileId,
+      version: version || undefined,
+    };
+
+    setEditForm((prev) => ({
+      ...prev,
+      mods: [...prev.mods, newMod],
+      newMod: { projectId: '', fileId: '', version: '' },
+      addError: null,
+    }));
+  };
+
   const handleUpdateSubmit = (event: FormEvent) => {
     event.preventDefault();
     const normalizedMax = editForm.maxMemory.trim();
-    const modsList = parseModsInput(editForm.mods);
+    const modsList = editForm.mods;
 
     onUpdate(
       {
@@ -526,15 +590,94 @@ function ServerRow({
                   placeholder="3G"
                 />
               </label>
-              <label>
-                CurseForge mods (comma separated `projectId[:fileId]@version`)
-                <textarea
-                  rows={4}
-                  value={editForm.mods}
-                  onChange={(e) => setEditForm({ ...editForm, mods: e.target.value })}
-                  placeholder="238222:6570130@1.20.1, 306612"
-                />
-              </label>
+              <div className="mod-list-card">
+                <div className="mod-list-header">
+                  <div>
+                    <p className="mod-list-title">CurseForge mods</p>
+                    <p className="muted">Add by project ID, optional file ID and version.</p>
+                  </div>
+                  <span className="pill">{editForm.mods.length} mods</span>
+                </div>
+                <div className="mod-list">
+                  {editForm.mods.length === 0 ? (
+                    <p className="muted">No mods added yet.</p>
+                  ) : (
+                    editForm.mods.map((mod, index) => (
+                      <div className="mod-row" key={`${mod.projectId}-${mod.fileId ?? 'latest'}-${index}`}>
+                        <div className="mod-info">
+                          <div className="mod-name">{mod.name || `Project #${mod.projectId}`}</div>
+                          <div className="mod-meta">
+                            Project {mod.projectId}
+                            {mod.fileId ? ` · File ${mod.fileId}` : ' · Latest file'}
+                            {mod.version ? ` · ${mod.version}` : ''}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className="icon-button danger"
+                          onClick={() => handleRemoveMod(index)}
+                          title="Remove mod"
+                        >
+                          {TrashIcon}
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="mod-add-row">
+                  <label>
+                    Project ID
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={editForm.newMod.projectId}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          newMod: { ...prev.newMod, projectId: e.target.value },
+                          addError: null,
+                        }))
+                      }
+                      placeholder="e.g. 238222"
+                    />
+                  </label>
+                  <label>
+                    File ID (optional)
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={editForm.newMod.fileId}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          newMod: { ...prev.newMod, fileId: e.target.value },
+                          addError: null,
+                        }))
+                      }
+                      placeholder="e.g. 6570130"
+                    />
+                  </label>
+                  <label>
+                    Version (optional)
+                    <input
+                      type="text"
+                      value={editForm.newMod.version}
+                      onChange={(e) =>
+                        setEditForm((prev) => ({
+                          ...prev,
+                          newMod: { ...prev.newMod, version: e.target.value },
+                          addError: null,
+                        }))
+                      }
+                      placeholder="e.g. 1.20.1"
+                    />
+                  </label>
+                  <button type="button" className="btn-secondary add-mod-button" onClick={handleAddMod}>
+                    Add mod
+                  </button>
+                </div>
+                {editForm.addError && <p className="error">{editForm.addError}</p>}
+              </div>
             </div>
             {updateError && <p className="error">{updateError}</p>}
             <div className="server-edit-actions">
@@ -666,29 +809,38 @@ function parseModsInput(modsText: string) {
     .filter(Boolean);
 }
 
-function modsToInput(mods?: ModSpec[]) {
+function modsFromMetadata(mods?: ModSpec[]): ModInput[] {
   if (!mods || mods.length === 0) {
-    return '';
+    return [];
   }
 
   return mods
     .map((mod) => {
-      const curse = mod.curseforge;
-      if (curse?.projectId) {
-        const filePart = curse.fileId ? `:${curse.fileId}` : '';
-        const versionPart = curse.gameVersion ? `@${curse.gameVersion}` : '';
-        return `${curse.projectId}${filePart}${versionPart}`;
+      if (!mod.curseforge?.projectId) {
+        return null;
       }
-      return '';
+      return {
+        projectId: mod.curseforge.projectId,
+        fileId: mod.curseforge.fileId,
+        version: mod.curseforge.gameVersion || '',
+        name: mod.name,
+      } as ModInput;
     })
-    .filter(Boolean)
-    .join(', ');
+    .filter(Boolean) as ModInput[];
+}
+
+function formatModInput(mod: ModInput) {
+  const filePart = mod.fileId ? `:${mod.fileId}` : '';
+  const versionPart = mod.version ? `@${mod.version}` : '';
+  return `${mod.projectId}${filePart}${versionPart}`;
 }
 
 function buildEditFormState(meta?: ServerMetadata): EditFormState {
   return {
     maxMemory: (meta?.maxMemory || meta?.minMemory || '').trim(),
-    mods: modsToInput(meta?.mods),
+    mods: modsFromMetadata(meta?.mods),
+    newMod: { projectId: '', fileId: '', version: '' },
+    addError: null,
   };
 }
 
