@@ -4,6 +4,7 @@ import {
   createServer,
   deleteServer,
   listServers,
+  ModSpec,
   ServerInfo,
   ServerMetadata,
   ServerType,
@@ -354,10 +355,7 @@ function ServerRow({
   portConflict,
 }: ServerRowProps) {
   const meta: ServerMetadata | undefined = server.metadata;
-  const mods =
-    meta?.mods && meta.mods.length > 0
-      ? meta.mods.map((m) => m.name || `#${m.curseforge?.projectId ?? '-'}`).join(', ')
-      : '—';
+  const modsDisplay = formatMods(meta?.mods);
 
   const statusClass = server.status === 'running' ? 'status-running' : server.status === 'stopped' ? 'status-stopped' : 'status-unknown';
   const typeClass = meta?.type ? `type-badge type-${meta.type}` : 'type-badge';
@@ -375,7 +373,7 @@ function ServerRow({
       <span><span className={typeClass}>{meta?.type ?? '—'}</span></span>
       <span className="version">{meta?.version ?? '—'}</span>
       <span className="port">{meta?.port ?? '25565'}</span>
-      <span className="mods">{mods}</span>
+      <span className="mods" title={modsDisplay.title || undefined}>{modsDisplay.display}</span>
       <span><span className={`status-badge ${statusClass}`}>{server.status ?? 'unknown'}</span></span>
       <span>{server.hasCompose ? <span className="compose-badge">✓</span> : '—'}</span>
       <span className="action-buttons">
@@ -483,6 +481,21 @@ function slugifyWorldName(name: string): string {
   }
   const slug = trimmed.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
   return slug || trimmed;
+}
+
+const MOD_DISPLAY_LIMIT = 6;
+function formatMods(mods?: ModSpec[]) {
+  if (!mods || mods.length === 0) {
+    return { display: '—', title: '' };
+  }
+
+  const names = mods.map((m) => m.name || (m.curseforge?.projectId ? `#${m.curseforge.projectId}` : 'mod'));
+  const title = names.join(', ');
+  const visible = names.slice(0, MOD_DISPLAY_LIMIT);
+  const remaining = names.length - visible.length;
+  const display = remaining > 0 ? `${visible.join(', ')} (+${remaining} more)` : visible.join(', ');
+
+  return { display, title };
 }
 
 const PlayIcon = (
