@@ -515,18 +515,20 @@ function ServerRow({
       return;
     }
 
-    let fileId: number | undefined;
-    if (fileIdStr) {
-      const parsedFileId = Number(fileIdStr);
-      if (!Number.isInteger(parsedFileId) || parsedFileId <= 0) {
-        setEditForm((prev) => ({ ...prev, addError: 'File ID must be a positive number' }));
-        return;
-      }
-      fileId = parsedFileId;
+    if (!fileIdStr) {
+      setEditForm((prev) => ({ ...prev, addError: 'File ID is required' }));
+      return;
     }
 
+    const parsedFileId = Number(fileIdStr);
+    if (!Number.isInteger(parsedFileId) || parsedFileId <= 0) {
+      setEditForm((prev) => ({ ...prev, addError: 'File ID must be a positive number' }));
+      return;
+    }
+    const fileId = parsedFileId;
+
     const duplicate = editForm.mods.find(
-      (mod) => mod.projectId === projectId && (fileId ? mod.fileId === fileId : true),
+      (mod) => mod.projectId === projectId && mod.fileId === fileId,
     );
     if (duplicate) {
       setEditForm((prev) => ({ ...prev, addError: 'Mod already added' }));
@@ -714,6 +716,7 @@ function ServerRow({
                         }))
                       }
                       placeholder="e.g. 6570130"
+                      required
                     />
                   </label>
                   <label>
