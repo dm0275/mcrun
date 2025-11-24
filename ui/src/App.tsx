@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { Dispatch, FormEvent, SetStateAction, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createServer,
@@ -34,6 +34,7 @@ export default function App() {
   const [createForm, setCreateForm] = useState<CreateFormState>(initialCreateState);
   const queryClient = useQueryClient();
   const [portError, setPortError] = useState<string | null>(null);
+  const [manifestError, setManifestError] = useState<string | null>(null);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -130,6 +131,25 @@ export default function App() {
           Create New Server
         </h2>
         <form className="card create-form" onSubmit={onSubmitCreate}>
+          <label>
+            Import CurseForge manifest (.json)
+            <input
+              type="file"
+              accept="application/json,.json"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) {
+                  return;
+                }
+                parseManifestFile(file, setCreateForm, setManifestError);
+              }}
+            />
+            <small className="helper-text">
+              Prefills world, server type, and mods using a CurseForge modpack manifest.
+            </small>
+          </label>
+          {manifestError && <p className="error">{manifestError}</p>}
+
           <label>
             World name
             <input
@@ -389,6 +409,80 @@ function ServerRow({
       </span>
     </div>
   );
+}
+
+function parseManifestFile(
+  file: File,
+  updateForm: Dispatch<SetStateAction<CreateFormState>>,
+  setError: (message: string | null) => void,
+) {
+  setError(null);
+  file
+    .text()
+    .then((content) => {
+      let manifest: any;
+      try {
+        manifest = JSON.parse(content);
+      } catch (err) {
+        throw new Error('Invalid JSON manifest file');
+      }
+
+      const name = typeof manifest?.name === 'string' ? manifest.name : '';
+      const minecraftVersion =
+        typeof manifest?.minecraft?.version === 'string' ? manifest.minecraft.version : '';
+      const loaderId =
+        manifest?.minecraft?.modLoaders?.find((l: any) => l?.primary)?.id ??
+        manifest?.minecraft?.modLoaders?.[0]?.id ??
+        '';
+
+      const inferredType: ServerType = inferServerType(loaderId);
+      const normalizedWorld = slugifyWorldName(name);
+      const manifestMods = Array.isArray(manifest?.files)
+        ? manifest.files
+            .map((entry: any) => {
+              const projectId = entry?.projectID ?? entry?.projectId;
+              if (!projectId) {
+                return null;
+              }
+              return minecraftVersion ? `${projectId}@${minecraftVersion}` : `${projectId}`;
+            })
+            .filter(Boolean)
+        : [];
+
+      updateForm((prev) => ({
+        ...prev,
+        worldName: normalizedWorld || prev.worldName,
+        type: inferredType ?? prev.type,
+        version:
+          minecraftVersion && inferredType !== 'vanilla'
+            ? `${inferredType}-${minecraftVersion}`
+            : prev.version || minecraftVersion,
+        mods: manifestMods.length > 0 ? Array.from(new Set(manifestMods)).join(', ') : prev.mods,
+      }));
+    })
+    .catch((err: unknown) => {
+      setError(err instanceof Error ? err.message : 'Failed to parse manifest file');
+    });
+}
+
+function inferServerType(loaderId: string): ServerType {
+  const normalized = loaderId.toLowerCase();
+  if (normalized.includes('forge')) {
+    return 'forge';
+  }
+  if (normalized.includes('fabric')) {
+    return 'fabric';
+  }
+  return 'vanilla';
+}
+
+function slugifyWorldName(name: string): string {
+  const trimmed = name.trim().toLowerCase();
+  if (!trimmed) {
+    return '';
+  }
+  const slug = trimmed.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+  return slug || trimmed;
 }
 
 const PlayIcon = (
