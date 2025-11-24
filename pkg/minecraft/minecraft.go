@@ -146,6 +146,22 @@ func StartServerFromCompose(worldName string) error {
 		},
 	}
 
+	if mcRunDir, err := McRunHomeDir(); err == nil {
+		if meta, metaErr := LoadServerMetadata(filepath.Join(mcRunDir, worldName)); metaErr == nil {
+			if strings.TrimSpace(meta.MinMemory) != "" {
+				cfg.MinMemory = meta.MinMemory
+			}
+			if strings.TrimSpace(meta.MaxMemory) != "" {
+				cfg.MaxMemory = meta.MaxMemory
+			}
+		}
+	}
+
+	execCfg.Environment = map[string]string{
+		"JAVA_MIN_MEM": cfg.MinMemory,
+		"JAVA_MAX_MEM": cfg.MaxMemory,
+	}
+
 	out, execErr := utils.Exec(execCfg)
 	if execErr != nil {
 		fmt.Println(out)

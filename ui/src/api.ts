@@ -70,6 +70,8 @@ export interface ServerMetadata {
   version: string;
   port: string;
   image: string;
+  maxMemory?: string;
+  minMemory?: string;
   mods?: ModSpec[];
   createdAt: string;
   updatedAt: string;
@@ -106,6 +108,33 @@ export function deleteServer(worldName: string) {
   return request<{ status: string }>(`/servers/${encodeURIComponent(worldName)}`, {
     method: 'DELETE',
   });
+}
+
+export interface UpdateServerPayload {
+  worldName: string;
+  maxMemory?: string;
+  curseForgeMods?: string[];
+}
+
+export function updateServer(payload: UpdateServerPayload) {
+  const body: any = {};
+  if (payload.maxMemory !== undefined) {
+    body.maxMemory = payload.maxMemory;
+  }
+  if (payload.curseForgeMods) {
+    body.mods = payload.curseForgeMods.map((specifier) => ({
+      source: 'curseforge',
+      curseforge: parseModSpecifier(specifier),
+    }));
+  }
+
+  return request<{ status: string; worldName: string }>(
+    `/servers/${encodeURIComponent(payload.worldName)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    },
+  );
 }
 
 function parseModSpecifier(spec: string) {

@@ -19,6 +19,8 @@ type ServerMetadata struct {
 	Version   string      `json:"version"`
 	Image     string      `json:"image"`
 	Port      string      `json:"port"`
+	MaxMemory string      `json:"maxMemory,omitempty"`
+	MinMemory string      `json:"minMemory,omitempty"`
 	Mods      []mods.Spec `json:"mods,omitempty"`
 	CreatedAt time.Time   `json:"createdAt"`
 	UpdatedAt time.Time   `json:"updatedAt"`
@@ -38,6 +40,8 @@ func SaveServerMetadata(cfg *MinecraftConfig) error {
 		Version:   cfg.Version,
 		Image:     cfg.Image,
 		Port:      cfg.Port,
+		MaxMemory: cfg.MaxMemory,
+		MinMemory: cfg.MinMemory,
 		Mods:      cfg.Mods,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),

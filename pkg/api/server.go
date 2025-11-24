@@ -9,10 +9,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/dm0275/mcrun/pkg/minecraft"
+	"github.com/dm0275/mcrun/pkg/mods"
 )
 
 // Server exposes an HTTP API for provisioning Minecraft servers via mcrun.
@@ -20,6 +22,13 @@ type Server struct {
 	addr       string
 	httpServer *http.Server
 	logger     *log.Logger
+}
+
+type UpdateServerRequest struct {
+	MaxMemory        string      `json:"maxMemory"`
+	MinMemory        string      `json:"minMemory"`
+	Mods             []mods.Spec `json:"mods"`
+	CurseForgeAPIKey string      `json:"curseForgeApiKey"`
 }
 
 // NewServer returns a configured API server listening on host:port.
@@ -108,6 +117,11 @@ func (s *Server) handleServerByName(w http.ResponseWriter, r *http.Request) {
 	worldName := parts[0]
 	if worldName == "" {
 		writeError(w, http.StatusNotFound, "world name missing")
+		return
+	}
+
+	if len(parts) == 1 && r.Method == http.MethodPatch {
+		s.handleUpdateServer(w, r, worldName)
 		return
 	}
 
@@ -298,6 +312,130 @@ func (s *Server) handleDeleteServer(w http.ResponseWriter, r *http.Request, worl
 		"worldName": worldName,
 		"status":    "deleted",
 	})
+}
+
+func (s *Server) handleUpdateServer(w http.ResponseWriter, r *http.Request, worldName string) {
+	defer r.Body.Close()
+
+	var req UpdateServerRequest
+	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON payload")
+		return
+	}
+
+	mcRunDir, err := minecraft.McRunHomeDir()
+	if err != nil {
+		s.logger.Printf("failed to resolve mcrun home: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to load server metadata")
+		return
+	}
+
+	rootDir := filepath.Join(mcRunDir, worldName)
+	meta, err := minecraft.LoadServerMetadata(rootDir)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			writeError(w, http.StatusNotFound, fmt.Sprintf("server %s not found", worldName))
+			return
+		}
+		s.logger.Printf("failed to load metadata: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to load server metadata")
+		return
+	}
+
+	cfg, err := configForType(meta.Type)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	cfg.WorldName = worldName
+	cfg.Version = meta.Version
+	cfg.Image = meta.Image
+	cfg.Port = meta.Port
+	cfg.Mods = meta.Mods
+	if strings.TrimSpace(meta.MaxMemory) != "" {
+		cfg.MaxMemory = meta.MaxMemory
+	}
+	if strings.TrimSpace(meta.MinMemory) != "" {
+		cfg.MinMemory = meta.MinMemory
+	}
+
+	if err := minecraft.SetupDirectories(cfg); err != nil {
+		s.logger.Printf("failed to setup directories for %s: %v", worldName, err)
+		writeError(w, http.StatusInternalServerError, "failed to prepare server directories")
+		return
+	}
+
+	if strings.TrimSpace(req.MaxMemory) != "" {
+		cfg.MaxMemory = req.MaxMemory
+	}
+	if strings.TrimSpace(req.MinMemory) != "" {
+		cfg.MinMemory = req.MinMemory
+	}
+	if req.Mods != nil {
+		cfg.Mods = make([]mods.Spec, 0, len(req.Mods))
+		for _, modSpec := range req.Mods {
+			modSpec = modSpec.Normalized()
+			if err := modSpec.Validate(); err != nil {
+				writeError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			cfg.Mods = append(cfg.Mods, modSpec)
+		}
+
+		if err := os.RemoveAll(cfg.ModsDir); err != nil {
+			s.logger.Printf("failed to reset mods directory: %v", err)
+			writeError(w, http.StatusInternalServerError, "failed to reset mods directory")
+			return
+		}
+		if err := os.MkdirAll(cfg.ModsDir, 0o755); err != nil {
+			s.logger.Printf("failed to recreate mods directory: %v", err)
+			writeError(w, http.StatusInternalServerError, "failed to prepare mods directory")
+			return
+		}
+	}
+
+	if strings.TrimSpace(req.CurseForgeAPIKey) != "" {
+		cfg.CurseForgeAPIKey = strings.TrimSpace(req.CurseForgeAPIKey)
+	}
+
+	if req.Mods != nil {
+		if err := minecraft.SyncMods(cfg); err != nil {
+			s.logger.Printf("failed to sync mods: %v", err)
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	}
+
+	if err := minecraft.SaveServerMetadata(cfg); err != nil {
+		s.logger.Printf("failed to save metadata: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to persist server metadata")
+		return
+	}
+
+	updatedMeta, metaErr := minecraft.LoadServerMetadata(cfg.RootDir)
+	if metaErr != nil {
+		s.logger.Printf("failed to reload metadata: %v", metaErr)
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"worldName": worldName,
+		"status":    "updated",
+		"metadata":  updatedMeta,
+	})
+}
+
+func configForType(serverType string) (*minecraft.MinecraftConfig, error) {
+	switch strings.ToLower(strings.TrimSpace(serverType)) {
+	case "", "vanilla":
+		return minecraft.NewMinecraftConfig(), nil
+	case "forge":
+		return minecraft.NewMinecraftForgeConfig(), nil
+	case "fabric":
+		return minecraft.NewMinecraftFabricConfig(), nil
+	default:
+		return nil, fmt.Errorf("unsupported server type %q", serverType)
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
