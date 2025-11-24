@@ -1,4 +1,5 @@
-import { Dispatch, FormEvent, SetStateAction, useMemo, useState } from 'react';
+import { Dispatch, FormEvent, ReactNode, SetStateAction, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createServer,
@@ -416,15 +417,16 @@ function ServerRow({
     ? `Port ${meta?.port ?? '25565'} used by ${portConflict.worldName}`
     : 'Start server';
 
-  const handleToggleEdit = () => {
+  const handleOpenEdit = () => {
     resetUpdate();
-    if (isEditing) {
-      setIsEditing(false);
-      setEditForm(buildEditFormState(meta));
-      return;
-    }
     setEditForm(buildEditFormState(meta));
     setIsEditing(true);
+  };
+
+  const handleCloseEdit = () => {
+    resetUpdate();
+    setIsEditing(false);
+    setEditForm(buildEditFormState(meta));
   };
 
   const handleUpdateSubmit = (event: FormEvent) => {
@@ -440,11 +442,7 @@ function ServerRow({
       },
       {
         onSuccess: () => {
-          setIsEditing(false);
-          setEditForm({
-            maxMemory: normalizedMax,
-            mods: editForm.mods.trim(),
-          });
+          handleCloseEdit();
         },
       },
     );
@@ -484,12 +482,12 @@ function ServerRow({
           <button
             type="button"
             className="icon-button"
-            onClick={handleToggleEdit}
-            disabled={updateBusy}
-            title="Edit server config"
-          >
-            {updateBusy ? SpinnerIcon : EditIcon}
-          </button>
+          onClick={handleOpenEdit}
+          disabled={updateBusy}
+          title="Edit server config"
+        >
+          {updateBusy ? SpinnerIcon : EditIcon}
+        </button>
           <button
             type="button"
             className="icon-button danger"
@@ -502,7 +500,21 @@ function ServerRow({
         </span>
       </div>
       {isEditing && (
-        <div className="server-edit-panel">
+        <Modal onClose={handleCloseEdit} ariaLabel={`Edit server ${server.worldName}`}>
+          <div className="modal-header">
+            <div>
+              <p className="modal-eyebrow">Editing server</p>
+              <h3 className="modal-title">{server.worldName}</h3>
+            </div>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={handleCloseEdit}
+              aria-label="Close"
+            >
+              {CloseIcon}
+            </button>
+          </div>
           <form className="server-edit-form" onSubmit={handleUpdateSubmit}>
             <div className="server-edit-grid">
               <label>
@@ -517,7 +529,7 @@ function ServerRow({
               <label>
                 CurseForge mods (comma separated `projectId[:fileId]@version`)
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={editForm.mods}
                   onChange={(e) => setEditForm({ ...editForm, mods: e.target.value })}
                   placeholder="238222:6570130@1.20.1, 306612"
@@ -542,14 +554,14 @@ function ServerRow({
               <button
                 type="button"
                 className="btn-secondary"
-                onClick={handleToggleEdit}
+                onClick={handleCloseEdit}
                 disabled={updateBusy}
               >
                 Cancel
               </button>
             </div>
           </form>
-        </div>
+        </Modal>
       )}
     </>
   );
@@ -680,6 +692,31 @@ function buildEditFormState(meta?: ServerMetadata): EditFormState {
   };
 }
 
+function Modal({
+  children,
+  onClose,
+  ariaLabel,
+}: {
+  children: ReactNode;
+  onClose: () => void;
+  ariaLabel: string;
+}) {
+  return createPortal(
+    <div className="modal-backdrop" role="presentation" onClick={onClose}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 const PlayIcon = (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
     <path fill="currentColor" d="M8 5v14l11-7z" />
@@ -717,5 +754,11 @@ const EditIcon = (
       fill="currentColor"
       d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92 2.17H5v-0.92l9.06-9.06 0.92 0.92L5.92 19.42zM20.71 5.63l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.84a1.003 1.003 0 0 0 0-1.4z"
     />
+  </svg>
+);
+
+const CloseIcon = (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path fill="currentColor" d="M18.3 5.71 12 12l6.3 6.29-1.42 1.42L10.59 13.41 4.3 19.71 2.89 18.3 9.17 12 2.89 5.71 4.3 4.29l6.29 6.29 6.29-6.29z" />
   </svg>
 );
