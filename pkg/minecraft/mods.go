@@ -45,18 +45,22 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 				cfClient = client
 			}
 
-			gameVersion := spec.CurseForge.GameVersion
-			if gameVersion == "" {
-				gameVersion = deriveGameVersion(mcconfig.Version)
-			}
-			if gameVersion == "" {
-				return fmt.Errorf("unable to determine game version for CurseForge mod %d; specify mods[].curseforge.gameVersion", spec.CurseForge.ProjectID)
-			}
+			fileID := spec.CurseForge.FileID
+			if fileID <= 0 {
+				gameVersion := spec.CurseForge.GameVersion
+				if gameVersion == "" {
+					gameVersion = deriveGameVersion(mcconfig.Version)
+				}
+				if gameVersion == "" {
+					return fmt.Errorf("unable to determine game version for CurseForge mod %d; specify mods[].curseforge.gameVersion", spec.CurseForge.ProjectID)
+				}
 
-			loaders := candidateLoaders(spec.CurseForge.Loader, mcconfig.ServerType)
-			fileID, err := cfClient.ResolveFileID(ctx, spec.CurseForge.ProjectID, loaders, gameVersion)
-			if err != nil {
-				return err
+				loaders := candidateLoaders(spec.CurseForge.Loader, mcconfig.ServerType)
+				resolvedID, err := cfClient.ResolveFileID(ctx, spec.CurseForge.ProjectID, loaders, gameVersion)
+				if err != nil {
+					return err
+				}
+				fileID = resolvedID
 			}
 
 			if spec.Name == "" {

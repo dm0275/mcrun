@@ -80,7 +80,9 @@ export interface ModSpec {
   source: string;
   curseforge?: {
     projectId: number;
+    fileId?: number;
     gameVersion?: string;
+    loader?: string;
   };
 }
 
@@ -107,9 +109,11 @@ export function deleteServer(worldName: string) {
 }
 
 function parseModSpecifier(spec: string) {
-  const [projectId, version] = spec.split('@');
+  const [projectAndFile, version] = spec.split('@');
+  const [projectIdStr, fileIdStr] = projectAndFile.split(':');
   return {
-    projectId: Number(projectId.trim()),
+    projectId: Number(projectIdStr.trim()),
+    fileId: fileIdStr ? Number(fileIdStr.trim()) : undefined,
     gameVersion: version?.trim() ?? '',
   };
 }

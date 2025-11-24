@@ -213,12 +213,12 @@ export default function App() {
           {portError && <p className="error">{portError}</p>}
 
           <label>
-            CurseForge mods (comma separated `projectId@version`)
+            CurseForge mods (comma separated `projectId[:fileId]@version`)
             <textarea
               rows={3}
               value={createForm.mods}
               onChange={(e) => setCreateForm({ ...createForm, mods: e.target.value })}
-              placeholder="238222@1.20.1, 306612"
+              placeholder="238222:6570130@1.20.1, 306612"
             />
           </label>
 
@@ -439,10 +439,13 @@ function parseManifestFile(
         ? manifest.files
             .map((entry: any) => {
               const projectId = entry?.projectID ?? entry?.projectId;
+              const fileId = entry?.fileID ?? entry?.fileId;
               if (!projectId) {
                 return null;
               }
-              return minecraftVersion ? `${projectId}@${minecraftVersion}` : `${projectId}`;
+              const versionPart = minecraftVersion ? `@${minecraftVersion}` : '';
+              const filePart = fileId ? `:${fileId}` : '';
+              return `${projectId}${filePart}${versionPart}`;
             })
             .filter(Boolean)
         : [];

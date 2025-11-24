@@ -18,6 +18,7 @@ var (
 // CurseForgeSpec represents the identifiers needed to download a CurseForge file.
 type CurseForgeSpec struct {
 	ProjectID   int    `json:"projectId"`
+	FileID      int    `json:"fileId,omitempty"`
 	GameVersion string `json:"gameVersion,omitempty"`
 	Loader      string `json:"loader,omitempty"`
 }
