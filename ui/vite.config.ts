@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
-    // Listen on all interfaces so the server is reachable via custom hostnames like minecraft.home
+    // Listen on all interfaces so the server is reachable via custom hostnames like minecraft.lan
     host: '0.0.0.0',
     port: 5173,
     hmr: {
