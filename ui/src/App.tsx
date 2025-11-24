@@ -9,9 +9,9 @@ import {
   ServerInfo,
   ServerMetadata,
   ServerType,
+  updateServer,
   startServer,
   stopServer,
-  updateServer,
 } from './api';
 import './App.css';
 
@@ -109,6 +109,24 @@ export default function App() {
         maxMemory: payload.maxMemory,
         curseForgeMods: payload.mods.map(formatModInput),
       }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['servers'] });
+    },
+  });
+
+  const restartMutation = useMutation({
+    mutationFn: async (payload: { worldName: string; status?: string }) => {
+      const name = payload.worldName.trim();
+      if (!name) {
+        throw new Error('World name is required to restart');
+      }
+
+      if (payload.status === 'running') {
+        await stopServer(name);
+      }
+      await startServer(name);
+      return { worldName: name };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
     },
@@ -250,12 +268,12 @@ export default function App() {
           {portError && <p className="error">{portError}</p>}
 
           <label>
-            CurseForge mods (comma separated `projectId[:fileId]@version`)
+            CurseForge mods (comma separated `projectId:fileId`)
             <textarea
               rows={3}
               value={createForm.mods}
               onChange={(e) => setCreateForm({ ...createForm, mods: e.target.value })}
-              placeholder="238222:6570130@1.20.1, 306612"
+              placeholder="238222:6570130"
             />
           </label>
 
@@ -348,6 +366,23 @@ export default function App() {
                   onStart={() => startMutation.mutate(server.worldName)}
                   onStop={() => stopMutation.mutate(server.worldName)}
                   onDelete={() => deleteMutation.mutate(server.worldName)}
+                  onUpdate={(payload, options) =>
+                    updateMutation.mutate(payload, {
+                      onSuccess: () => {
+                        options?.onSuccess?.();
+                      },
+                    })
+                  }
+                  onRestart={(payload, options) =>
+                    restartMutation.mutate(payload, {
+                      onSuccess: () => {
+                        options?.onSuccess?.();
+                      },
+                      onError: (err) => {
+                        options?.onError?.(err as Error);
+                      },
+                    })
+                  }
                   startBusy={
                     startMutation.isPending && startMutation.variables === server.worldName
                   }
@@ -360,13 +395,6 @@ export default function App() {
                       ? findPortConflict(server.metadata.port, server.worldName)
                       : undefined
                   }
-                  onUpdate={(payload, options) =>
-                    updateMutation.mutate(payload, {
-                      onSuccess: () => {
-                        options?.onSuccess?.();
-                      },
-                    })
-                  }
                   updateBusy={
                     updateMutation.isPending &&
                     updateMutation.variables?.worldName === server.worldName
@@ -377,6 +405,18 @@ export default function App() {
                       ? updateMutation.error instanceof Error
                         ? updateMutation.error.message
                         : 'Failed to update server'
+                      : null
+                  }
+                  restartBusy={
+                    restartMutation.isPending &&
+                    restartMutation.variables?.worldName === server.worldName
+                  }
+                  restartError={
+                    restartMutation.isError &&
+                    restartMutation.variables?.worldName === server.worldName
+                      ? restartMutation.error instanceof Error
+                        ? restartMutation.error.message
+                        : 'Failed to restart server'
                       : null
                   }
                   resetUpdate={updateMutation.reset}
@@ -395,12 +435,15 @@ interface ServerRowProps {
   onStart: () => void;
   onStop: () => void;
   onDelete: () => void;
-   onUpdate: (payload: UpdateServerInput, options?: { onSuccess?: () => void }) => void;
+  onUpdate: (payload: UpdateServerInput, options?: { onSuccess?: () => void }) => void;
+  onRestart: (payload: { worldName: string; status?: string }, options?: { onSuccess?: () => void; onError?: (err: Error) => void }) => void;
   startBusy: boolean;
   stopBusy: boolean;
   deleteBusy: boolean;
   updateBusy: boolean;
   updateError: string | null;
+  restartBusy: boolean;
+  restartError: string | null;
   resetUpdate: () => void;
   portConflict?: ServerInfo;
 }
@@ -411,16 +454,20 @@ function ServerRow({
   onStop,
   onDelete,
   onUpdate,
+  onRestart,
   startBusy,
   stopBusy,
   deleteBusy,
   updateBusy,
   updateError,
+  restartBusy,
+  restartError,
   resetUpdate,
   portConflict,
 }: ServerRowProps) {
   const meta: ServerMetadata | undefined = server.metadata;
   const [isEditing, setIsEditing] = useState(false);
+  const [pendingRestart, setPendingRestart] = useState(false);
   const [editForm, setEditForm] = useState<EditFormState>(() => buildEditFormState(meta));
   const modsDisplay = formatMods(meta?.mods);
 
@@ -434,12 +481,14 @@ function ServerRow({
 
   const handleOpenEdit = () => {
     resetUpdate();
+    setPendingRestart(false);
     setEditForm(buildEditFormState(meta));
     setIsEditing(true);
   };
 
   const handleCloseEdit = () => {
     resetUpdate();
+    setPendingRestart(false);
     setIsEditing(false);
     setEditForm(buildEditFormState(meta));
   };
@@ -506,7 +555,22 @@ function ServerRow({
       },
       {
         onSuccess: () => {
-          handleCloseEdit();
+          setPendingRestart(true);
+        },
+      },
+    );
+  };
+
+  const handleRestart = () => {
+    setPendingRestart(false);
+    onRestart(
+      { worldName: server.worldName, status: server.status },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+        },
+        onError: () => {
+          setPendingRestart(true);
         },
       },
     );
@@ -703,6 +767,42 @@ function ServerRow({
                 Cancel
               </button>
             </div>
+            {pendingRestart && (
+              <div className="inline-warning">
+                <div>
+                  <strong>Restart required.</strong> Changes apply after restarting this server.
+                </div>
+                <div className="inline-warning__actions">
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={handleRestart}
+                    disabled={restartBusy}
+                  >
+                    {restartBusy ? (
+                      <>
+                        <span className="spinner-small"></span>
+                        Restarting…
+                      </>
+                    ) : (
+                      <>
+                        <span>🔄</span>
+                        Restart now
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => setPendingRestart(false)}
+                    disabled={restartBusy}
+                  >
+                    Later
+                  </button>
+                </div>
+                {restartError && <p className="error">{restartError}</p>}
+              </div>
+            )}
           </form>
         </Modal>
       )}
