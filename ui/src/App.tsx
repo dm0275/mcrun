@@ -1,4 +1,4 @@
-import { Dispatch, FormEvent, ReactNode, SetStateAction, useMemo, useState } from 'react';
+import { Dispatch, FormEvent, ReactNode, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -373,16 +373,7 @@ export default function App() {
                       },
                     })
                   }
-                  onRestart={(payload, options) =>
-                    restartMutation.mutate(payload, {
-                      onSuccess: () => {
-                        options?.onSuccess?.();
-                      },
-                      onError: (err) => {
-                        options?.onError?.(err as Error);
-                      },
-                    })
-                  }
+                  onRestart={(payload) => restartMutation.mutate(payload)}
                   startBusy={
                     startMutation.isPending && startMutation.variables === server.worldName
                   }
@@ -419,6 +410,10 @@ export default function App() {
                         : 'Failed to restart server'
                       : null
                   }
+                  restartSuccess={
+                    restartMutation.isSuccess &&
+                    restartMutation.variables?.worldName === server.worldName
+                  }
                   resetUpdate={updateMutation.reset}
                 />
               ))}
@@ -436,7 +431,7 @@ interface ServerRowProps {
   onStop: () => void;
   onDelete: () => void;
   onUpdate: (payload: UpdateServerInput, options?: { onSuccess?: () => void }) => void;
-  onRestart: (payload: { worldName: string; status?: string }, options?: { onSuccess?: () => void; onError?: (err: Error) => void }) => void;
+  onRestart: (payload: { worldName: string; status?: string }) => void;
   startBusy: boolean;
   stopBusy: boolean;
   deleteBusy: boolean;
@@ -444,6 +439,7 @@ interface ServerRowProps {
   updateError: string | null;
   restartBusy: boolean;
   restartError: string | null;
+  restartSuccess: boolean;
   resetUpdate: () => void;
   portConflict?: ServerInfo;
 }
@@ -462,6 +458,7 @@ function ServerRow({
   updateError,
   restartBusy,
   restartError,
+  restartSuccess,
   resetUpdate,
   portConflict,
 }: ServerRowProps) {
@@ -478,6 +475,14 @@ function ServerRow({
   const startTitle = portConflict
     ? `Port ${meta?.port ?? '25565'} used by ${portConflict.worldName}`
     : 'Start server';
+
+  // Close modal when restart succeeds
+  useEffect(() => {
+    if (pendingRestart && restartSuccess && !restartBusy) {
+      setIsEditing(false);
+      setPendingRestart(false);
+    }
+  }, [pendingRestart, restartBusy, restartSuccess]);
 
   const handleOpenEdit = () => {
     resetUpdate();
@@ -562,18 +567,7 @@ function ServerRow({
   };
 
   const handleRestart = () => {
-    setPendingRestart(false);
-    onRestart(
-      { worldName: server.worldName, status: server.status },
-      {
-        onSuccess: () => {
-          setIsEditing(false);
-        },
-        onError: () => {
-          setPendingRestart(true);
-        },
-      },
-    );
+    onRestart({ worldName: server.worldName, status: server.status });
   };
 
   return (
@@ -628,7 +622,7 @@ function ServerRow({
         </span>
       </div>
       {isEditing && (
-        <Modal onClose={handleCloseEdit} ariaLabel={`Edit server ${server.worldName}`}>
+        <Modal onClose={restartBusy ? () => {} : handleCloseEdit} ariaLabel={`Edit server ${server.worldName}`}>
           <div className="modal-header">
             <div>
               <p className="modal-eyebrow">Editing server</p>
@@ -638,6 +632,7 @@ function ServerRow({
               type="button"
               className="icon-button"
               onClick={handleCloseEdit}
+              disabled={restartBusy}
               aria-label="Close"
             >
               {CloseIcon}
@@ -658,7 +653,7 @@ function ServerRow({
                 <div className="mod-list-header">
                   <div>
                     <p className="mod-list-title">CurseForge mods</p>
-                    <p className="muted">Add by project ID, optional file ID and version.</p>
+                    <p className="muted">Add by project ID, file ID and optional version.</p>
                   </div>
                   <span className="pill">{editForm.mods.length} mods</span>
                 </div>
@@ -706,7 +701,7 @@ function ServerRow({
                     />
                   </label>
                   <label>
-                    File ID (optional)
+                    File ID
                     <input
                       type="text"
                       inputMode="numeric"
@@ -745,7 +740,7 @@ function ServerRow({
             </div>
             {updateError && <p className="error">{updateError}</p>}
             <div className="server-edit-actions">
-              <button type="submit" className="btn-primary" disabled={updateBusy}>
+              <button type="submit" className="btn-primary" disabled={updateBusy || restartBusy}>
                 {updateBusy ? (
                   <>
                     <span className="spinner-small"></span>
@@ -762,16 +757,25 @@ function ServerRow({
                 type="button"
                 className="btn-secondary"
                 onClick={handleCloseEdit}
-                disabled={updateBusy}
+                disabled={updateBusy || restartBusy}
               >
                 Cancel
               </button>
             </div>
             {pendingRestart && (
-              <div className="inline-warning">
-                <div>
-                  <strong>Restart required.</strong> Changes apply after restarting this server.
-                </div>
+                <div className="inline-warning">
+                  <div>
+                    {restartBusy ? (
+                      <>
+                        <span className="spinner-small"></span>
+                        <strong>Restarting…</strong> Applying changes and restarting now.
+                      </>
+                    ) : (
+                      <>
+                        <strong>Restart required.</strong> Changes apply after restarting this server.
+                      </>
+                    )}
+                  </div>
                 <div className="inline-warning__actions">
                   <button
                     type="button"
