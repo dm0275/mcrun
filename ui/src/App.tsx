@@ -465,6 +465,8 @@ function ServerRow({
   const meta: ServerMetadata | undefined = server.metadata;
   const [isEditing, setIsEditing] = useState(false);
   const [pendingRestart, setPendingRestart] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleteInitiated, setDeleteInitiated] = useState(false);
   const [editForm, setEditForm] = useState<EditFormState>(() => buildEditFormState(meta));
   const modsDisplay = formatMods(meta?.mods);
 
@@ -483,6 +485,20 @@ function ServerRow({
       setPendingRestart(false);
     }
   }, [pendingRestart, restartBusy, restartSuccess]);
+
+  useEffect(() => {
+    if (deleteInitiated && !deleteBusy) {
+      setConfirmDeleteOpen(false);
+      setDeleteInitiated(false);
+    }
+  }, [deleteInitiated, deleteBusy]);
+
+  useEffect(() => {
+    if (deleteInitiated && !deleteBusy) {
+      setConfirmDeleteOpen(false);
+      setDeleteInitiated(false);
+    }
+  }, [deleteInitiated, deleteBusy]);
 
   const handleOpenEdit = () => {
     resetUpdate();
@@ -593,36 +609,36 @@ function ServerRow({
             title={startTitle}
           >
             {startBusy ? SpinnerIcon : PlayIcon}
-          </button>
-          <button
-            type="button"
-            className="icon-button"
-            onClick={onStop}
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          onClick={onStop}
             disabled={stopBusy}
             title="Stop server"
-          >
-            {stopBusy ? SpinnerIcon : StopIcon}
-          </button>
-          <button
-            type="button"
-            className="icon-button"
+        >
+          {stopBusy ? SpinnerIcon : StopIcon}
+        </button>
+        <button
+          type="button"
+          className="icon-button"
           onClick={handleOpenEdit}
           disabled={updateBusy}
           title="Edit server config"
         >
           {updateBusy ? SpinnerIcon : EditIcon}
         </button>
-          <button
-            type="button"
-            className="icon-button danger"
-            onClick={onDelete}
-            disabled={deleteBusy}
-            title="Delete server"
-          >
-            {deleteBusy ? SpinnerIcon : TrashIcon}
-          </button>
-        </span>
-      </div>
+        <button
+          type="button"
+          className="icon-button danger"
+          onClick={() => setConfirmDeleteOpen(true)}
+          disabled={deleteBusy}
+          title="Delete server"
+        >
+          {deleteBusy ? SpinnerIcon : TrashIcon}
+        </button>
+      </span>
+    </div>
       {isEditing && (
         <Modal onClose={restartBusy ? () => {} : handleCloseEdit} ariaLabel={`Edit server ${server.worldName}`}>
           <div className="modal-header">
@@ -810,6 +826,61 @@ function ServerRow({
               </div>
             )}
           </form>
+        </Modal>
+      )}
+      {confirmDeleteOpen && (
+        <Modal onClose={() => (!deleteBusy ? setConfirmDeleteOpen(false) : undefined)} ariaLabel={`Delete server ${server.worldName}`}>
+          <div className="modal-header">
+            <div>
+              <p className="modal-eyebrow">Delete server</p>
+              <h3 className="modal-title">{server.worldName}</h3>
+            </div>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => setConfirmDeleteOpen(false)}
+              disabled={deleteBusy}
+              aria-label="Close"
+            >
+              {CloseIcon}
+            </button>
+          </div>
+          <div className="modal-body">
+            <p className="muted">
+              This action is irreversible. All data for this server will be permanently removed.
+            </p>
+          </div>
+          <div className="server-edit-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setConfirmDeleteOpen(false)}
+              disabled={deleteBusy}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn-primary danger-button"
+              onClick={() => {
+                setDeleteInitiated(true);
+                onDelete();
+              }}
+              disabled={deleteBusy}
+            >
+              {deleteBusy ? (
+                <>
+                  <span className="spinner-small"></span>
+                  Deleting…
+                </>
+              ) : (
+                <>
+                  <span>🗑️</span>
+                  Delete forever
+                </>
+              )}
+            </button>
+          </div>
         </Modal>
       )}
     </>
