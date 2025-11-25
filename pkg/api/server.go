@@ -408,6 +408,12 @@ func (s *Server) handleUpdateServer(w http.ResponseWriter, r *http.Request, worl
 		}
 	}
 
+	if err := minecraft.GenerateComposeFile(cfg); err != nil {
+		s.logger.Printf("failed to regenerate compose file: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to update docker compose file")
+		return
+	}
+
 	if err := minecraft.SaveServerMetadata(cfg); err != nil {
 		s.logger.Printf("failed to save metadata: %v", err)
 		writeError(w, http.StatusInternalServerError, "failed to persist server metadata")

@@ -47,6 +47,8 @@ func GenerateComposeFile(mcconfig *MinecraftConfig) error {
       {{- end }}
       {{- end }}
     environment:
+      - JAVA_MIN_MEM={{ .MinMemory }}
+      - JAVA_MAX_MEM={{ .MaxMemory }}
       {{- if .LocalServerConfig }}
       - LOAD_PROPERTY_FILE=true
       {{- end }}
