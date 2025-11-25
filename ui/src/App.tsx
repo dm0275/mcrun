@@ -21,6 +21,7 @@ interface CreateFormState {
   version: string;
   maxMemory: string;
   port: string;
+  seed: string;
   mods: string;
 }
 
@@ -56,6 +57,7 @@ const initialCreateState: CreateFormState = {
   version: '',
   maxMemory: '3G',
   port: '25565',
+  seed: '',
   mods: '',
 };
 
@@ -73,6 +75,7 @@ export default function App() {
         version: createForm.version.trim() || undefined,
         maxMemory: createForm.maxMemory.trim() || undefined,
         port: createForm.port.trim() || undefined,
+        seed: createForm.seed.trim() || undefined,
         curseForgeMods: parseModsInput(createForm.mods),
       }),
     onSuccess: () => {
@@ -248,6 +251,16 @@ export default function App() {
               value={createForm.maxMemory}
               onChange={(e) => setCreateForm({ ...createForm, maxMemory: e.target.value })}
               placeholder="3G"
+            />
+          </label>
+
+          <label>
+            Seed (optional)
+            <input
+              type="text"
+              value={createForm.seed}
+              onChange={(e) => setCreateForm({ ...createForm, seed: e.target.value })}
+              placeholder="Leave blank for random"
             />
           </label>
 

@@ -8,6 +8,7 @@ export interface CreateServerPayload {
   version?: string;
   maxMemory?: string;
   port?: string;
+  seed?: string;
   curseForgeMods?: string[];
 }
 
@@ -45,6 +46,7 @@ export function createServer(payload: CreateServerPayload) {
     version: payload.version,
     maxMemory: payload.maxMemory,
     port: payload.port,
+    seed: payload.seed,
     mods: payload.curseForgeMods?.map((specifier) => ({
       source: 'curseforge',
       curseforge: parseModSpecifier(specifier),
