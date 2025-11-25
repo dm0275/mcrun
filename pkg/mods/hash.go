@@ -15,6 +15,7 @@ func (s Spec) HashValue() string {
 	gameVersion := ""
 	loader := ""
 	url := strings.TrimSpace(s.URL)
+	downloadURL := strings.TrimSpace(s.DownloadURL)
 
 	if s.CurseForge != nil {
 		projectID = s.CurseForge.ProjectID
@@ -23,7 +24,7 @@ func (s Spec) HashValue() string {
 		loader = strings.ToLower(strings.TrimSpace(s.CurseForge.Loader))
 	}
 
-	raw := fmt.Sprintf("%s:%d:%d:%s:%s:%s", source, projectID, fileID, gameVersion, loader, url)
+	raw := fmt.Sprintf("%s:%d:%d:%s:%s:%s:%s", source, projectID, fileID, gameVersion, loader, url, downloadURL)
 	sum := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(sum[:])
 }

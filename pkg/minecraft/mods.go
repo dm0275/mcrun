@@ -112,6 +112,8 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 				spec.CurseForge.FileID = fileID
 			}
 
+			spec.DownloadURL = cfClient.DownloadURL(spec.CurseForge.ProjectID, fileID)
+
 			destPath, err := ensureModFromCache(cachePath, mcconfig.ModsDir)
 			if err != nil {
 				return err

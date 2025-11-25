@@ -69,6 +69,10 @@ func (c *Client) DownloadMod(ctx context.Context, projectID, fileID int, destDir
 	return destPath, false, nil
 }
 
+func (c *Client) DownloadURL(projectID, fileID int) string {
+	return fmt.Sprintf("%s/mods/%d/files/%d/download", c.baseURL, projectID, fileID)
+}
+
 // ResolveFileID tries to match a file by loader + Minecraft version similar to download.sh.
 func (c *Client) ResolveFileID(ctx context.Context, projectID int, loaders []string, gameVersion string) (int, error) {
 	if strings.TrimSpace(gameVersion) == "" {
@@ -155,7 +159,7 @@ func (c *Client) fetchFileMetadata(ctx context.Context, projectID, fileID int) (
 }
 
 func (c *Client) downloadToPath(ctx context.Context, projectID, fileID int, destPath string) error {
-	downloadURL := fmt.Sprintf("%s/mods/%d/files/%d/download", c.baseURL, projectID, fileID)
+	downloadURL := c.DownloadURL(projectID, fileID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
 	if err != nil {

@@ -25,11 +25,12 @@ type CurseForgeSpec struct {
 
 // Spec describes a mod reference that mcrun can resolve before launching a server.
 type Spec struct {
-	Source     string          `json:"source"`
-	Name       string          `json:"name,omitempty"`
-	URL        string          `json:"url,omitempty"`
-	Hash       string          `json:"hash,omitempty"`
-	CurseForge *CurseForgeSpec `json:"curseforge,omitempty"`
+	Source      string          `json:"source"`
+	Name        string          `json:"name,omitempty"`
+	URL         string          `json:"url,omitempty"`
+	DownloadURL string          `json:"downloadUrl,omitempty"`
+	Hash        string          `json:"hash,omitempty"`
+	CurseForge  *CurseForgeSpec `json:"curseforge,omitempty"`
 }
 
 // Normalized returns a copy of the spec with normalized source naming.
