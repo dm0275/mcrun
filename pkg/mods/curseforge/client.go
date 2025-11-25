@@ -8,12 +8,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
 
 const (
 	defaultBaseURL = "https://www.curseforge.com/api/v1"
+	widgetBaseURL  = "https://api.cfwidget.com"
 )
 
 // Client exposes minimal functionality required to download mods from CurseForge.
@@ -73,28 +75,14 @@ func (c *Client) ResolveFileID(ctx context.Context, projectID int, loaders []str
 		return 0, fmt.Errorf("gameVersion is required to resolve a CurseForge file")
 	}
 
-	files, err := c.listFiles(ctx, projectID)
+	project, err := c.fetchWidgetProject(ctx, projectID)
 	if err != nil {
 		return 0, err
 	}
 
-	loaderCandidates := loaders
-	if len(loaderCandidates) == 0 {
-		loaderCandidates = []string{""}
-	} else {
-		loaderCandidates = append(loaderCandidates, "")
-	}
-
-	for _, loader := range loaderCandidates {
-		for _, f := range files {
-			if !containsIgnoreCase(f.GameVersions, gameVersion) {
-				continue
-			}
-			if loader != "" && !containsIgnoreCase(f.GameVersions, loader) {
-				continue
-			}
-			return f.ID, nil
-		}
+	fileID := selectWidgetFileID(project.Files, loaders, gameVersion)
+	if fileID != 0 {
+		return fileID, nil
 	}
 
 	return 0, fmt.Errorf("unable to find CurseForge file for project %d matching version %s", projectID, gameVersion)
@@ -106,41 +94,33 @@ type fileSummary struct {
 	GameVersions []string `json:"gameVersions"`
 }
 
-func (c *Client) listFiles(ctx context.Context, projectID int) ([]fileSummary, error) {
-	url := fmt.Sprintf("%s/mods/%d/files?pageIndex=0&pageSize=100&sort=dateCreated&sortDescending=true&removeAlphas=true", c.baseURL, projectID)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	c.addHeaders(req)
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<10))
-		return nil, fmt.Errorf("curseforge API error (%d): %s", resp.StatusCode, strings.TrimSpace(string(b)))
-	}
-
-	var payload struct {
-		Data []fileSummary `json:"data"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		return nil, err
-	}
-
-	return payload.Data, nil
-}
-
 type curseForgeFile struct {
 	FileName string `json:"fileName"`
 }
 
-type modSummary struct {
-	Name string `json:"name"`
+type ModLinks struct {
+	WebsiteURL string `json:"websiteUrl"`
+}
+
+type ModSummary struct {
+	Name  string   `json:"name"`
+	Links ModLinks `json:"links"`
+}
+
+type widgetProject struct {
+	ID    int    `json:"id"`
+	Title string `json:"title"`
+	URLs  struct {
+		CurseForge string `json:"curseforge"`
+	} `json:"urls"`
+	Files []widgetFile `json:"files"`
+}
+
+type widgetFile struct {
+	ID         int      `json:"id"`
+	URL        string   `json:"url"`
+	Versions   []string `json:"versions"`
+	UploadedAt string   `json:"uploaded_at"`
 }
 
 func (c *Client) fetchFileMetadata(ctx context.Context, projectID, fileID int) (*curseForgeFile, error) {
@@ -214,13 +194,28 @@ func (c *Client) downloadToPath(ctx context.Context, projectID, fileID int, dest
 }
 
 // FetchModSummary returns basic information about a CurseForge project.
-func (c *Client) FetchModSummary(ctx context.Context, projectID int) (*modSummary, error) {
-	url := fmt.Sprintf("%s/mods/%d", c.baseURL, projectID)
+func (c *Client) FetchModSummary(ctx context.Context, projectID int) (*ModSummary, error) {
+	project, err := c.fetchWidgetProject(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	summary := &ModSummary{
+		Name: project.Title,
+		Links: ModLinks{
+			WebsiteURL: project.URLs.CurseForge,
+		},
+	}
+	return summary, nil
+}
+
+func (c *Client) fetchWidgetProject(ctx context.Context, projectID int) (*widgetProject, error) {
+	url := fmt.Sprintf("%s/%d", widgetBaseURL, projectID)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
-	c.addHeaders(req)
+	req.Header.Set("Accept", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -229,19 +224,60 @@ func (c *Client) FetchModSummary(ctx context.Context, projectID int) (*modSummar
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<10))
-		return nil, fmt.Errorf("curseforge API error (%d): %s", resp.StatusCode, strings.TrimSpace(string(b)))
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<10))
+		return nil, fmt.Errorf("cfwidget API error (%d): %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
-	var payload struct {
-		Data modSummary `json:"data"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+	var project widgetProject
+	if err := json.NewDecoder(resp.Body).Decode(&project); err != nil {
 		return nil, err
 	}
 
-	return &payload.Data, nil
+	return &project, nil
+}
+
+func selectWidgetFileID(files []widgetFile, loaders []string, gameVersion string) int {
+	if len(files) == 0 {
+		return 0
+	}
+
+	type fileWithTime struct {
+		file widgetFile
+		t    time.Time
+	}
+
+	fileList := make([]fileWithTime, 0, len(files))
+	for _, f := range files {
+		t, _ := time.Parse(time.RFC3339, f.UploadedAt)
+		fileList = append(fileList, fileWithTime{file: f, t: t})
+	}
+
+	sort.Slice(fileList, func(i, j int) bool {
+		return fileList[i].t.After(fileList[j].t)
+	})
+
+	normalizedGame := strings.ToLower(strings.TrimSpace(gameVersion))
+	loaderCandidates := loaders
+	if len(loaderCandidates) == 0 {
+		loaderCandidates = []string{""}
+	} else {
+		loaderCandidates = append(loaderCandidates, "")
+	}
+
+	for _, loader := range loaderCandidates {
+		normalizedLoader := strings.ToLower(strings.TrimSpace(loader))
+		for _, entry := range fileList {
+			if !containsIgnoreCase(entry.file.Versions, normalizedGame) {
+				continue
+			}
+			if normalizedLoader != "" && !containsIgnoreCase(entry.file.Versions, normalizedLoader) {
+				continue
+			}
+			return entry.file.ID
+		}
+	}
+
+	return 0
 }
 
 func (c *Client) addHeaders(req *http.Request) {

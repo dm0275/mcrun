@@ -63,9 +63,14 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 				fileID = resolvedID
 			}
 
-			if spec.Name == "" {
+			if spec.Name == "" || spec.URL == "" {
 				if summary, err := cfClient.FetchModSummary(ctx, spec.CurseForge.ProjectID); err == nil {
-					spec.Name = summary.Name
+					if spec.Name == "" {
+						spec.Name = summary.Name
+					}
+					if spec.URL == "" && summary.Links.WebsiteURL != "" {
+						spec.URL = summary.Links.WebsiteURL
+					}
 				}
 			}
 
