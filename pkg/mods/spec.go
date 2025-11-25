@@ -28,6 +28,7 @@ type Spec struct {
 	Source     string          `json:"source"`
 	Name       string          `json:"name,omitempty"`
 	URL        string          `json:"url,omitempty"`
+	Hash       string          `json:"hash,omitempty"`
 	CurseForge *CurseForgeSpec `json:"curseforge,omitempty"`
 }
 

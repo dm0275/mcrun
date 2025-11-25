@@ -81,6 +81,7 @@ export interface ModSpec {
   name?: string;
   source: string;
   url?: string;
+  hash?: string;
   curseforge?: {
     projectId: number;
     fileId?: number;

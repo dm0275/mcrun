@@ -27,6 +27,7 @@ type MinecraftConfig struct {
 	LocalServerConfig bool
 	MountDirs         []string
 	Mods              []mods.Spec
+	ExistingMods      []mods.Spec
 	CurseForgeAPIKey  string
 	ServerType        string
 	dockerComposeFile string

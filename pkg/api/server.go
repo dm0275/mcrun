@@ -353,6 +353,7 @@ func (s *Server) handleUpdateServer(w http.ResponseWriter, r *http.Request, worl
 	cfg.Image = meta.Image
 	cfg.Port = meta.Port
 	cfg.Mods = meta.Mods
+	cfg.ExistingMods = meta.Mods
 	if strings.TrimSpace(meta.MaxMemory) != "" {
 		cfg.MaxMemory = meta.MaxMemory
 	}

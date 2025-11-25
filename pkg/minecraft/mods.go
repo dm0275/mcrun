@@ -22,6 +22,14 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 		return nil
 	}
 
+	existingByKey := make(map[string]mods.Spec)
+	for _, existing := range mcconfig.ExistingMods {
+		key := existing.Key()
+		if key != "" {
+			existingByKey[key] = existing
+		}
+	}
+
 	var cfClient *curseforge.Client
 	ctx := context.Background()
 
@@ -29,6 +37,14 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 		spec := mcconfig.Mods[i].Normalized()
 		if err := spec.Validate(); err != nil {
 			return err
+		}
+
+		key := spec.Key()
+		incomingHash := spec.HashValue()
+		if prev, ok := existingByKey[key]; ok && prev.Hash != "" && prev.Hash == incomingHash {
+			// Spec unchanged; reuse existing metadata and skip network.
+			mcconfig.Mods[i] = prev
+			continue
 		}
 
 		switch spec.SourceKey() {
@@ -91,6 +107,11 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 				spec.Name = inferNameFromPath(cachePath)
 			}
 
+			// Persist resolved file id so future runs can skip resolution.
+			if spec.CurseForge != nil {
+				spec.CurseForge.FileID = fileID
+			}
+
 			destPath, err := ensureModFromCache(cachePath, mcconfig.ModsDir)
 			if err != nil {
 				return err
@@ -105,6 +126,7 @@ func SyncMods(mcconfig *MinecraftConfig) error {
 			return fmt.Errorf("unsupported mod source %q", spec.Source)
 		}
 
+		spec.Hash = spec.HashValue()
 		mcconfig.Mods[i] = spec
 	}
 
