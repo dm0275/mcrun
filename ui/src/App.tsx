@@ -28,6 +28,7 @@ interface CreateFormState {
 interface UpdateServerInput {
   worldName: string;
   maxMemory?: string;
+  minMemory?: string;
   mods: ModInput[];
 }
 
@@ -74,6 +75,7 @@ export default function App() {
         type: createForm.type,
         version: createForm.version.trim() || undefined,
         maxMemory: createForm.maxMemory.trim() || undefined,
+        minMemory: createForm.maxMemory.trim() || undefined,
         port: createForm.port.trim() || undefined,
         seed: createForm.seed.trim() || undefined,
         curseForgeMods: parseModsInput(createForm.mods),
@@ -110,6 +112,7 @@ export default function App() {
       updateServer({
         worldName: payload.worldName,
         maxMemory: payload.maxMemory,
+        minMemory: payload.minMemory ?? payload.maxMemory,
         curseForgeMods: payload.mods.map(formatModInput),
       }),
     onSuccess: () => {
@@ -587,6 +590,7 @@ function ServerRow({
       {
         worldName: server.worldName,
         maxMemory: normalizedMax || undefined,
+        minMemory: normalizedMax || undefined,
         mods: modsList,
       },
       {

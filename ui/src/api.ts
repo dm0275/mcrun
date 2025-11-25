@@ -7,6 +7,7 @@ export interface CreateServerPayload {
   type: ServerType;
   version?: string;
   maxMemory?: string;
+  minMemory?: string;
   port?: string;
   seed?: string;
   curseForgeMods?: string[];
@@ -45,6 +46,7 @@ export function createServer(payload: CreateServerPayload) {
     type: payload.type,
     version: payload.version,
     maxMemory: payload.maxMemory,
+    minMemory: payload.minMemory,
     port: payload.port,
     seed: payload.seed,
     mods: payload.curseForgeMods?.map((specifier) => ({
@@ -118,6 +120,7 @@ export function deleteServer(worldName: string) {
 export interface UpdateServerPayload {
   worldName: string;
   maxMemory?: string;
+  minMemory?: string;
   curseForgeMods?: string[];
 }
 
@@ -125,6 +128,9 @@ export function updateServer(payload: UpdateServerPayload) {
   const body: any = {};
   if (payload.maxMemory !== undefined) {
     body.maxMemory = payload.maxMemory;
+  }
+  if (payload.minMemory !== undefined) {
+    body.minMemory = payload.minMemory;
   }
   if (payload.curseForgeMods) {
     body.mods = payload.curseForgeMods.map((specifier) => ({
