@@ -116,6 +116,7 @@ export default function App() {
         curseForgeMods: payload.mods.map(formatModInput),
       }),
     onSuccess: () => {
+      // Invalidate queries - refetch will happen in onUpdate handler
       queryClient.invalidateQueries({ queryKey: ['servers'] });
     },
   });
@@ -382,14 +383,14 @@ export default function App() {
                   onStart={() => startMutation.mutate(server.worldName)}
                   onStop={() => stopMutation.mutate(server.worldName)}
                   onDelete={() => deleteMutation.mutate(server.worldName)}
-                  onUpdate={(payload, options) =>
-                    updateMutation.mutate(payload, {
-                      onSuccess: () => {
-                        options?.onSuccess?.();
-                      },
-                    })
-                  }
+                  onUpdate={async (payload, options) => {
+                    await updateMutation.mutateAsync(payload);
+                    // Wait for query refetch to complete to ensure fresh data
+                    await queryClient.refetchQueries({ queryKey: ['servers'] });
+                    options?.onSuccess?.();
+                  }}
                   onRestart={(payload) => restartMutation.mutate(payload)}
+                  queryClient={queryClient}
                   startBusy={
                     startMutation.isPending && startMutation.variables === server.worldName
                   }
@@ -430,6 +431,7 @@ export default function App() {
                     restartMutation.isSuccess &&
                     restartMutation.variables?.worldName === server.worldName
                   }
+                  resetRestart={restartMutation.reset}
                   resetUpdate={updateMutation.reset}
                 />
               ))}
@@ -446,8 +448,9 @@ interface ServerRowProps {
   onStart: () => void;
   onStop: () => void;
   onDelete: () => void;
-  onUpdate: (payload: UpdateServerInput, options?: { onSuccess?: () => void }) => void;
+  onUpdate: (payload: UpdateServerInput, options?: { onSuccess?: () => void }) => void | Promise<void>;
   onRestart: (payload: { worldName: string; status?: string }) => void;
+  queryClient: ReturnType<typeof useQueryClient>;
   startBusy: boolean;
   stopBusy: boolean;
   deleteBusy: boolean;
@@ -456,6 +459,7 @@ interface ServerRowProps {
   restartBusy: boolean;
   restartError: string | null;
   restartSuccess: boolean;
+  resetRestart: () => void;
   resetUpdate: () => void;
   portConflict?: ServerInfo;
 }
@@ -467,6 +471,7 @@ function ServerRow({
   onDelete,
   onUpdate,
   onRestart,
+  queryClient,
   startBusy,
   stopBusy,
   deleteBusy,
@@ -475,6 +480,7 @@ function ServerRow({
   restartBusy,
   restartError,
   restartSuccess,
+  resetRestart,
   resetUpdate,
   portConflict,
 }: ServerRowProps) {
@@ -518,6 +524,7 @@ function ServerRow({
 
   const handleOpenEdit = () => {
     resetUpdate();
+    resetRestart();
     setPendingRestart(false);
     setEditForm(buildEditFormState(meta));
     setIsEditing(true);
@@ -581,28 +588,48 @@ function ServerRow({
     }));
   };
 
-  const handleUpdateSubmit = (event: FormEvent) => {
+  const handleUpdateSubmit = async (event: FormEvent) => {
     event.preventDefault();
     const normalizedMax = editForm.maxMemory.trim();
     const modsList = editForm.mods;
 
-    onUpdate(
-      {
-        worldName: server.worldName,
-        maxMemory: normalizedMax || undefined,
-        minMemory: normalizedMax || undefined,
-        mods: modsList,
-      },
-      {
-        onSuccess: () => {
-          setPendingRestart(true);
+    // Reset pendingRestart at the start to ensure clean state for each update
+    setPendingRestart(false);
+
+    try {
+      await onUpdate(
+        {
+          worldName: server.worldName,
+          maxMemory: normalizedMax || undefined,
+          minMemory: normalizedMax || undefined,
+          mods: modsList,
         },
-      },
-    );
+        {
+          onSuccess: () => {
+            // Update completed and query refetched, now safe to show restart prompt
+            setPendingRestart(true);
+          },
+        },
+      );
+    } catch (error) {
+      // Error handling is done by updateError prop
+      // On error, keep pendingRestart false since update didn't succeed
+    }
   };
 
-  const handleRestart = () => {
-    onRestart({ worldName: server.worldName, status: server.status });
+  const handleRestart = async () => {
+    resetRestart();
+    // Refetch to get the absolute latest server data before restarting
+    // This ensures we have the most up-to-date status and configuration
+    await queryClient.refetchQueries({ queryKey: ['servers'] });
+    
+    // Get the latest server data from the cache
+    const servers = queryClient.getQueryData<ServerInfo[]>(['servers']);
+    const latestServer = servers?.find((s) => s.worldName === server.worldName);
+    
+    // Use the latest server status, or fall back to current prop, or default to 'stopped'
+    const currentStatus = latestServer?.status || server.status || 'stopped';
+    onRestart({ worldName: server.worldName, status: currentStatus });
   };
 
   return (
