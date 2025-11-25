@@ -716,7 +716,6 @@ function ServerRow({
                         }))
                       }
                       placeholder="e.g. 6570130"
-                      required
                     />
                   </label>
                   <label>

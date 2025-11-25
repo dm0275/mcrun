@@ -80,6 +80,7 @@ export interface ServerMetadata {
 export interface ModSpec {
   name?: string;
   source: string;
+  url?: string;
   curseforge?: {
     projectId: number;
     fileId?: number;
