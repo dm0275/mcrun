@@ -1,6 +1,7 @@
 import { Dispatch, FormEvent, ReactNode, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import JSZip from 'jszip';
 import {
   createServer,
   deleteServer,
@@ -195,10 +196,10 @@ export default function App() {
         </h2>
         <form className="card create-form" onSubmit={onSubmitCreate}>
           <label>
-            Import CurseForge manifest (.json)
+            Import CurseForge manifest (.json or .zip)
             <input
               type="file"
-              accept="application/json,.json"
+              accept="application/json,.json,application/zip,.zip"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) {
@@ -937,8 +938,7 @@ function parseManifestFile(
   setError: (message: string | null) => void,
 ) {
   setError(null);
-  file
-    .text()
+  readManifestContent(file)
     .then((content) => {
       let manifest: any;
       try {
@@ -986,6 +986,25 @@ function parseManifestFile(
     .catch((err: unknown) => {
       setError(err instanceof Error ? err.message : 'Failed to parse manifest file');
     });
+}
+
+async function readManifestContent(file: File): Promise<string> {
+  const lowerName = file.name.toLowerCase();
+  const isZip =
+    lowerName.endsWith('.zip') ||
+    file.type === 'application/zip' ||
+    file.type === 'application/x-zip-compressed';
+
+  if (!isZip) {
+    return file.text();
+  }
+
+  const zip = await JSZip.loadAsync(await file.arrayBuffer());
+  const manifestFile = zip.file(/(^|\/)manifest\.json$/i)?.[0];
+  if (!manifestFile) {
+    throw new Error('manifest.json not found in zip file');
+  }
+  return manifestFile.async('text');
 }
 
 function inferServerType(loaderId: string): ServerType {
