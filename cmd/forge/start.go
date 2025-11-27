@@ -6,6 +6,7 @@ import (
 	"github.com/dm0275/mcrun/pkg/minecraft"
 	"github.com/dm0275/mcrun/utils"
 	"github.com/spf13/cobra"
+	"strings"
 )
 
 func NewForgeStartCmd() *cobra.Command {
@@ -22,6 +23,11 @@ func NewForgeStartCmd() *cobra.Command {
 
 			err = minecraft.EnsurePortAvailable(mcConfig.Port, mcConfig.WorldName)
 			utils.CheckErr(err)
+
+			if mcConfig.EnableRcon && strings.TrimSpace(mcConfig.RconPort) != "" {
+				err = minecraft.EnsurePortAvailable(mcConfig.RconPort, mcConfig.WorldName)
+				utils.CheckErr(err)
+			}
 
 			// Generate server properties
 			if mcConfig.LocalServerConfig {

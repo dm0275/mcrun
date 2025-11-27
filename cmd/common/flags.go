@@ -11,6 +11,9 @@ func ConfigureCommonFlags(cmd *cobra.Command, mcconfig *minecraft.MinecraftConfi
 
 	cmd.Flags().StringVarP(&mcconfig.Version, "version", "", mcconfig.Version, "Minecraft version")
 	cmd.Flags().StringVarP(&mcconfig.Port, "port", "", mcconfig.Port, "Server port")
+	cmd.Flags().BoolVar(&mcconfig.EnableRcon, "enable-rcon", mcconfig.EnableRcon, "Enable RCON connections")
+	cmd.Flags().StringVar(&mcconfig.RconPort, "rcon-port", mcconfig.RconPort, "RCON port (used when enable-rcon is true)")
+	cmd.Flags().StringVar(&mcconfig.RconPassword, "rcon-password", mcconfig.RconPassword, "RCON password (used when enable-rcon is true)")
 	cmd.Flags().StringVarP(&mcconfig.MinMemory, "min-memory", "", mcconfig.MinMemory, "Minimum memory limit")
 	cmd.Flags().StringVarP(&mcconfig.MaxMemory, "max-memory", "", mcconfig.MaxMemory, "Maximum memory limit")
 	cmd.Flags().StringVarP(&mcconfig.Seed, "seed", "", mcconfig.Seed, "Minecraft Seed")

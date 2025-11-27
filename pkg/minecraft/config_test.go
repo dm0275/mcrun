@@ -65,6 +65,9 @@ func TestNewMinecraftConfig(t *testing.T) {
 				EnableCmdBlock:    false,
 				LocalServerConfig: true,
 				ServerType:        "vanilla",
+				EnableRcon:        false,
+				RconPort:          "25575",
+				RconPassword:      "minecraft",
 			},
 		},
 	}
@@ -94,6 +97,9 @@ func TestNewMinecraftForgeConfig(t *testing.T) {
 				EnableCmdBlock:    true,
 				LocalServerConfig: true,
 				ServerType:        "forge",
+				EnableRcon:        false,
+				RconPort:          "25575",
+				RconPassword:      "minecraft",
 			},
 		},
 	}
@@ -123,6 +129,9 @@ func TestNewMinecraftFabricConfig(t *testing.T) {
 				EnableCmdBlock:    true,
 				LocalServerConfig: true,
 				ServerType:        "fabric",
+				EnableRcon:        false,
+				RconPort:          "25575",
+				RconPassword:      "minecraft",
 			},
 		},
 	}

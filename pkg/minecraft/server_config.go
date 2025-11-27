@@ -45,6 +45,8 @@ type ServerConfig struct {
 	UseNativeTransport          bool   `prop:"use-native-transport"`
 	Motd                        string `prop:"motd"`
 	EnableRcon                  bool   `prop:"enable-rcon"`
+	RconPort                    int    `prop:"rcon.port" default:"25575"`
+	RconPassword                string `prop:"rcon.password" default:"minecraft"`
 }
 
 func (s ServerConfig) MarshalAndWriteToFile(filePath string) error {
@@ -137,6 +139,8 @@ func NewServerConfig() *ServerConfig {
 		UseNativeTransport:          true,
 		Motd:                        "Docker Minecraft Server",
 		EnableRcon:                  false,
+		RconPort:                    25575,
+		RconPassword:                "minecraft",
 	}
 }
 

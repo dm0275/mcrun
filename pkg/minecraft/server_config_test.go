@@ -84,6 +84,8 @@ func TestNewServerConfig(t *testing.T) {
 		UseNativeTransport:          true,
 		Motd:                        "Docker Minecraft Server",
 		EnableRcon:                  false,
+		RconPort:                    25575,
+		RconPassword:                "minecraft",
 	}
 
 	tests := []struct {

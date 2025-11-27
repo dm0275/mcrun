@@ -177,6 +177,13 @@ func (s *Server) handleCreateServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if config.EnableRcon && strings.TrimSpace(config.RconPort) != "" {
+		if err := minecraft.EnsurePortAvailable(config.RconPort, config.WorldName); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
 	if err := minecraft.SetupDirectories(config); err != nil {
 		s.logger.Printf("failed to setup directories: %v", err)
 		writeError(w, http.StatusInternalServerError, "failed to prepare server directories")
@@ -354,6 +361,13 @@ func (s *Server) handleUpdateServer(w http.ResponseWriter, r *http.Request, worl
 	cfg.Port = meta.Port
 	cfg.Mods = meta.Mods
 	cfg.ExistingMods = meta.Mods
+	cfg.EnableRcon = meta.EnableRcon
+	if strings.TrimSpace(meta.RconPort) != "" {
+		cfg.RconPort = meta.RconPort
+	}
+	if strings.TrimSpace(meta.RconPassword) != "" {
+		cfg.RconPassword = meta.RconPassword
+	}
 	if strings.TrimSpace(meta.MaxMemory) != "" {
 		cfg.MaxMemory = meta.MaxMemory
 	}

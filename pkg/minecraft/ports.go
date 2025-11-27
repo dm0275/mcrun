@@ -28,6 +28,9 @@ func EnsurePortAvailable(port, excludeWorld string) error {
 		if server.Metadata.Port == port && server.Status == "running" {
 			return fmt.Errorf("port %s is already in use by running server %s", port, server.WorldName)
 		}
+		if strings.TrimSpace(server.Metadata.RconPort) != "" && server.Metadata.RconPort == port && server.Status == "running" {
+			return fmt.Errorf("port %s is already in use by running server %s", port, server.WorldName)
+		}
 	}
 
 	return nil

@@ -35,6 +35,9 @@ func GenerateComposeFile(mcconfig *MinecraftConfig) error {
     container_name: "{{ .WorldName }}-minecraft"
     ports:
       - "{{ .Port }}:25565"
+      {{- if .EnableRcon }}
+      - "{{ .RconPort }}:{{ .RconPort }}"
+      {{- end }}
     volumes:
       - {{ .WorldDir }}:/opt/minecraft/world
       - {{ .ModsDir }}:/opt/minecraft/mods
@@ -57,6 +60,11 @@ func GenerateComposeFile(mcconfig *MinecraftConfig) error {
       {{- end }}
       {{- if .EnableCmdBlock }}
       - ENABLE_CMD_BLOCK={{ .EnableCmdBlock }}
+      {{- end}}
+      {{- if .EnableRcon }}
+      - ENABLE_RCON={{ .EnableRcon }}
+      - RCON_PORT={{ .RconPort }}
+      - RCON_PASSWORD={{ .RconPassword }}
       {{- end}}
       - MAX_PLAYERS
       - DIFFICULTY

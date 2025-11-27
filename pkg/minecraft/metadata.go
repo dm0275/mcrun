@@ -14,16 +14,19 @@ const metadataFileName = "metadata.json"
 
 // ServerMetadata stores basic information about a provisioned server.
 type ServerMetadata struct {
-	WorldName string      `json:"worldName"`
-	Type      string      `json:"type"`
-	Version   string      `json:"version"`
-	Image     string      `json:"image"`
-	Port      string      `json:"port"`
-	MaxMemory string      `json:"maxMemory,omitempty"`
-	MinMemory string      `json:"minMemory,omitempty"`
-	Mods      []mods.Spec `json:"mods,omitempty"`
-	CreatedAt time.Time   `json:"createdAt"`
-	UpdatedAt time.Time   `json:"updatedAt"`
+	WorldName    string      `json:"worldName"`
+	Type         string      `json:"type"`
+	Version      string      `json:"version"`
+	Image        string      `json:"image"`
+	Port         string      `json:"port"`
+	MaxMemory    string      `json:"maxMemory,omitempty"`
+	MinMemory    string      `json:"minMemory,omitempty"`
+	Mods         []mods.Spec `json:"mods,omitempty"`
+	EnableRcon   bool        `json:"enableRcon,omitempty"`
+	RconPort     string      `json:"rconPort,omitempty"`
+	RconPassword string      `json:"rconPassword,omitempty"`
+	CreatedAt    time.Time   `json:"createdAt"`
+	UpdatedAt    time.Time   `json:"updatedAt"`
 }
 
 // SaveServerMetadata writes metadata for the provided configuration, preserving the
@@ -35,16 +38,22 @@ func SaveServerMetadata(cfg *MinecraftConfig) error {
 
 	metaPath := filepath.Join(cfg.RootDir, metadataFileName)
 	meta := &ServerMetadata{
-		WorldName: cfg.WorldName,
-		Type:      cfg.ServerType,
-		Version:   cfg.Version,
-		Image:     cfg.Image,
-		Port:      cfg.Port,
-		MaxMemory: cfg.MaxMemory,
-		MinMemory: cfg.MinMemory,
-		Mods:      cfg.Mods,
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		WorldName:  cfg.WorldName,
+		Type:       cfg.ServerType,
+		Version:    cfg.Version,
+		Image:      cfg.Image,
+		Port:       cfg.Port,
+		MaxMemory:  cfg.MaxMemory,
+		MinMemory:  cfg.MinMemory,
+		Mods:       cfg.Mods,
+		EnableRcon: cfg.EnableRcon,
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+	}
+
+	if cfg.EnableRcon {
+		meta.RconPort = cfg.RconPort
+		meta.RconPassword = cfg.RconPassword
 	}
 
 	if existing, err := LoadServerMetadata(cfg.RootDir); err == nil {

@@ -27,6 +27,9 @@ type CreateServerRequest struct {
 	MountDirs         []string    `json:"mountDirs"`
 	Mods              []mods.Spec `json:"mods"`
 	CurseForgeAPIKey  string      `json:"curseForgeApiKey"`
+	EnableRcon        *bool       `json:"enableRcon"`
+	RconPort          string      `json:"rconPort"`
+	RconPassword      string      `json:"rconPassword"`
 }
 
 // TypeOrDefault ensures a stable value in responses.
@@ -90,6 +93,15 @@ func (r CreateServerRequest) ToMinecraftConfig() (*minecraft.MinecraftConfig, er
 	}
 	if r.LocalServerConfig != nil {
 		cfg.LocalServerConfig = *r.LocalServerConfig
+	}
+	if r.EnableRcon != nil {
+		cfg.EnableRcon = *r.EnableRcon
+	}
+	if strings.TrimSpace(r.RconPort) != "" {
+		cfg.RconPort = r.RconPort
+	}
+	if strings.TrimSpace(r.RconPassword) != "" {
+		cfg.RconPassword = r.RconPassword
 	}
 	if strings.TrimSpace(r.CurseForgeAPIKey) != "" {
 		cfg.CurseForgeAPIKey = strings.TrimSpace(r.CurseForgeAPIKey)

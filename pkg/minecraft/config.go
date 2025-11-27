@@ -30,6 +30,9 @@ type MinecraftConfig struct {
 	ExistingMods      []mods.Spec
 	CurseForgeAPIKey  string
 	ServerType        string
+	EnableRcon        bool
+	RconPort          string
+	RconPassword      string
 	dockerComposeFile string
 }
 
@@ -45,6 +48,9 @@ func NewMinecraftConfig() *MinecraftConfig {
 		LocalServerConfig: true,
 		CurseForgeAPIKey:  os.Getenv("CURSEFORGE_API_KEY"),
 		ServerType:        "vanilla",
+		EnableRcon:        false,
+		RconPort:          "25575",
+		RconPassword:      "minecraft",
 	}
 }
 
@@ -60,6 +66,9 @@ func NewMinecraftForgeConfig() *MinecraftConfig {
 		LocalServerConfig: true,
 		CurseForgeAPIKey:  os.Getenv("CURSEFORGE_API_KEY"),
 		ServerType:        "forge",
+		EnableRcon:        false,
+		RconPort:          "25575",
+		RconPassword:      "minecraft",
 	}
 }
 
@@ -75,6 +84,9 @@ func NewMinecraftFabricConfig() *MinecraftConfig {
 		LocalServerConfig: true,
 		CurseForgeAPIKey:  os.Getenv("CURSEFORGE_API_KEY"),
 		ServerType:        "fabric",
+		EnableRcon:        false,
+		RconPort:          "25575",
+		RconPassword:      "minecraft",
 	}
 }
 
