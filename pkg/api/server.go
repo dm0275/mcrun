@@ -29,6 +29,9 @@ type UpdateServerRequest struct {
 	MinMemory        string      `json:"minMemory"`
 	Mods             []mods.Spec `json:"mods"`
 	CurseForgeAPIKey string      `json:"curseForgeApiKey"`
+	EnableRcon       *bool       `json:"enableRcon"`
+	RconPort         string      `json:"rconPort"`
+	RconPassword     string      `json:"rconPassword"`
 }
 
 // NewServer returns a configured API server listening on host:port.
@@ -390,11 +393,27 @@ func (s *Server) handleUpdateServer(w http.ResponseWriter, r *http.Request, worl
 		return
 	}
 
+	if cfg.EnableRcon && strings.TrimSpace(cfg.RconPort) != "" {
+		if err := minecraft.EnsurePortAvailable(cfg.RconPort, cfg.WorldName); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+
 	if strings.TrimSpace(req.MaxMemory) != "" {
 		cfg.MaxMemory = req.MaxMemory
 	}
 	if strings.TrimSpace(req.MinMemory) != "" {
 		cfg.MinMemory = req.MinMemory
+	}
+	if req.EnableRcon != nil {
+		cfg.EnableRcon = *req.EnableRcon
+	}
+	if strings.TrimSpace(req.RconPort) != "" {
+		cfg.RconPort = req.RconPort
+	}
+	if strings.TrimSpace(req.RconPassword) != "" {
+		cfg.RconPassword = req.RconPassword
 	}
 	if req.Mods != nil {
 		cfg.Mods = make([]mods.Spec, 0, len(req.Mods))

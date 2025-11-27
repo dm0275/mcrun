@@ -25,6 +25,9 @@ interface CreateFormState {
   port: string;
   seed: string;
   mods: string;
+  enableRcon: boolean;
+  rconPort: string;
+  rconPassword: string;
 }
 
 interface UpdateServerInput {
@@ -32,6 +35,9 @@ interface UpdateServerInput {
   maxMemory?: string;
   minMemory?: string;
   mods: ModInput[];
+  enableRcon?: boolean;
+  rconPort?: string;
+  rconPassword?: string;
 }
 
 interface EditFormState {
@@ -39,6 +45,9 @@ interface EditFormState {
   mods: ModInput[];
   newMod: ModDraft;
   addError: string | null;
+  enableRcon: boolean;
+  rconPort: string;
+  rconPassword: string;
 }
 
 interface ModInput {
@@ -62,12 +71,16 @@ const initialCreateState: CreateFormState = {
   port: '25565',
   seed: '',
   mods: '',
+  enableRcon: true,
+  rconPort: '25575',
+  rconPassword: 'minecraft',
 };
 
 export default function App() {
   const [createForm, setCreateForm] = useState<CreateFormState>(initialCreateState);
   const queryClient = useQueryClient();
   const [portError, setPortError] = useState<string | null>(null);
+  const [rconPortError, setRconPortError] = useState<string | null>(null);
   const [manifestError, setManifestError] = useState<string | null>(null);
   const [selectedServer, setSelectedServer] = useState<ServerInfo | null>(null);
 
@@ -82,6 +95,9 @@ export default function App() {
         port: createForm.port.trim() || undefined,
         seed: createForm.seed.trim() || undefined,
         curseForgeMods: parseModsInput(createForm.mods),
+        enableRcon: createForm.enableRcon,
+        rconPort: createForm.rconPort.trim() || undefined,
+        rconPassword: createForm.rconPassword.trim() || undefined,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
@@ -117,6 +133,9 @@ export default function App() {
         maxMemory: payload.maxMemory,
         minMemory: payload.minMemory ?? payload.maxMemory,
         curseForgeMods: payload.mods.map(formatModInput),
+        enableRcon: payload.enableRcon,
+        rconPort: payload.rconPort,
+        rconPassword: payload.rconPassword,
       }),
     onSuccess: () => {
       // Invalidate queries - refetch will happen in onUpdate handler
@@ -161,10 +180,25 @@ export default function App() {
       );
     };
   }, [serversQuery.data]);
+  const findRconConflict = useMemo(() => {
+    return (port: string, excludeWorld?: string) => {
+      if (!serversQuery.data) {
+        return undefined;
+      }
+      const normalized = port.trim();
+      return serversQuery.data.find(
+        (server) =>
+          server.status === 'running' &&
+          server.metadata?.rconPort === normalized &&
+          server.worldName !== excludeWorld,
+      );
+    };
+  }, [serversQuery.data]);
 
   const onSubmitCreate = (event: FormEvent) => {
     event.preventDefault();
     setPortError(null);
+    setRconPortError(null);
     if (!createForm.worldName.trim()) {
       return;
     }
@@ -173,6 +207,16 @@ export default function App() {
     if (conflict) {
       setPortError(`Port ${desiredPort} is already used by ${conflict.worldName}. Stop it first.`);
       return;
+    }
+    if (createForm.enableRcon) {
+      const desiredRconPort = createForm.rconPort.trim() || '25575';
+      const rconConflict = findRconConflict(desiredRconPort);
+      if (rconConflict) {
+        setRconPortError(
+          `RCON port ${desiredRconPort} is already used by ${rconConflict.worldName}. Stop it first.`,
+        );
+        return;
+      }
     }
     createMutation.mutate(undefined, {
       onSuccess: () => setCreateForm(initialCreateState),
@@ -286,6 +330,46 @@ export default function App() {
             />
           </label>
           {portError && <p className="error">{portError}</p>}
+
+          <div className="inline-fields">
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={createForm.enableRcon}
+                onChange={(e) => {
+                  setCreateForm({ ...createForm, enableRcon: e.target.checked });
+                  setRconPortError(null);
+                }}
+              />
+              Enable RCON
+            </label>
+            <label>
+              RCON port
+              <input
+                type="text"
+                value={createForm.rconPort}
+                onChange={(e) => {
+                  setCreateForm({ ...createForm, rconPort: e.target.value });
+                  if (rconPortError) {
+                    setRconPortError(null);
+                  }
+                }}
+                placeholder="25575"
+                disabled={!createForm.enableRcon}
+              />
+            </label>
+            <label>
+              RCON password
+              <input
+                type="password"
+                value={createForm.rconPassword}
+                onChange={(e) => setCreateForm({ ...createForm, rconPassword: e.target.value })}
+                placeholder="minecraft"
+                disabled={!createForm.enableRcon}
+              />
+            </label>
+          </div>
+          {rconPortError && <p className="error">{rconPortError}</p>}
 
           <label>
             CurseForge mods (comma separated `projectId:fileId`)
@@ -407,6 +491,11 @@ export default function App() {
                       ? findPortConflict(server.metadata.port, server.worldName)
                       : undefined
                   }
+                  rconConflict={
+                    server.metadata?.rconPort && server.metadata.enableRcon
+                      ? findRconConflict(server.metadata.rconPort, server.worldName)
+                      : undefined
+                  }
                   updateBusy={
                     updateMutation.isPending &&
                     updateMutation.variables?.worldName === server.worldName
@@ -473,6 +562,7 @@ interface ServerRowProps {
   resetRestart: () => void;
   resetUpdate: () => void;
   portConflict?: ServerInfo;
+  rconConflict?: ServerInfo;
 }
 
 function ServerRow({
@@ -495,6 +585,7 @@ function ServerRow({
   resetRestart,
   resetUpdate,
   portConflict,
+  rconConflict,
 }: ServerRowProps) {
   const meta: ServerMetadata | undefined = server.metadata;
   const [isEditing, setIsEditing] = useState(false);
@@ -507,10 +598,12 @@ function ServerRow({
   const statusClass = server.status === 'running' ? 'status-running' : server.status === 'stopped' ? 'status-stopped' : 'status-unknown';
   const typeClass = meta?.type ? `type-badge type-${meta.type}` : 'type-badge';
 
-  const startDisabled = startBusy || Boolean(portConflict);
+  const startDisabled = startBusy || Boolean(portConflict || rconConflict);
   const startTitle = portConflict
     ? `Port ${meta?.port ?? '25565'} used by ${portConflict.worldName}`
-    : 'Start server';
+    : rconConflict
+      ? `RCON port ${meta?.rconPort ?? '25575'} used by ${rconConflict.worldName}`
+      : 'Start server';
 
   // Close modal when restart succeeds
   useEffect(() => {
@@ -615,6 +708,9 @@ function ServerRow({
           maxMemory: normalizedMax || undefined,
           minMemory: normalizedMax || undefined,
           mods: modsList,
+          enableRcon: editForm.enableRcon,
+          rconPort: editForm.enableRcon ? editForm.rconPort.trim() || undefined : undefined,
+          rconPassword: editForm.enableRcon ? editForm.rconPassword.trim() || undefined : undefined,
         },
         {
           onSuccess: () => {
@@ -746,6 +842,44 @@ function ServerRow({
                   placeholder="3G"
                 />
               </label>
+              <div className="mod-list-card">
+                <div className="mod-list-header">
+                  <div>
+                    <p className="mod-list-title">RCON</p>
+                    <p className="muted">Control RCON access for this server.</p>
+                  </div>
+                </div>
+                <div className="mod-add-row">
+                  <label className="checkbox-row">
+                    <input
+                      type="checkbox"
+                      checked={editForm.enableRcon}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, enableRcon: e.target.checked }))}
+                    />
+                    Enable RCON
+                  </label>
+                  <label>
+                    RCON port
+                    <input
+                      type="text"
+                      value={editForm.rconPort}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, rconPort: e.target.value }))}
+                      placeholder="25575"
+                      disabled={!editForm.enableRcon}
+                    />
+                  </label>
+                  <label>
+                    RCON password
+                    <input
+                      type="password"
+                      value={editForm.rconPassword}
+                      onChange={(e) => setEditForm((prev) => ({ ...prev, rconPassword: e.target.value }))}
+                      placeholder="minecraft"
+                      disabled={!editForm.enableRcon}
+                    />
+                  </label>
+                </div>
+              </div>
               <div className="mod-list-card">
                 <div className="mod-list-header">
                   <div>
@@ -1238,6 +1372,9 @@ function buildEditFormState(meta?: ServerMetadata): EditFormState {
     mods: modsFromMetadata(meta?.mods),
     newMod: { projectId: '', fileId: '', version: '' },
     addError: null,
+    enableRcon: meta?.enableRcon ?? true,
+    rconPort: (meta?.rconPort || '25575').trim(),
+    rconPassword: (meta?.rconPassword || 'minecraft').trim(),
   };
 }
 

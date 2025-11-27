@@ -11,6 +11,9 @@ export interface CreateServerPayload {
   port?: string;
   seed?: string;
   curseForgeMods?: string[];
+  enableRcon?: boolean;
+  rconPort?: string;
+  rconPassword?: string;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -53,6 +56,9 @@ export function createServer(payload: CreateServerPayload) {
       source: 'curseforge',
       curseforge: parseModSpecifier(specifier),
     })),
+    enableRcon: payload.enableRcon,
+    rconPort: payload.rconPort,
+    rconPassword: payload.rconPassword,
   };
   return request<{ status: string; worldName: string }>(`/servers`, {
     method: 'POST',
@@ -125,6 +131,9 @@ export interface UpdateServerPayload {
   maxMemory?: string;
   minMemory?: string;
   curseForgeMods?: string[];
+  enableRcon?: boolean;
+  rconPort?: string;
+  rconPassword?: string;
 }
 
 export function updateServer(payload: UpdateServerPayload) {
@@ -140,6 +149,15 @@ export function updateServer(payload: UpdateServerPayload) {
       source: 'curseforge',
       curseforge: parseModSpecifier(specifier),
     }));
+  }
+  if (payload.enableRcon !== undefined) {
+    body.enableRcon = payload.enableRcon;
+  }
+  if (payload.rconPort !== undefined) {
+    body.rconPort = payload.rconPort;
+  }
+  if (payload.rconPassword !== undefined) {
+    body.rconPassword = payload.rconPassword;
   }
 
   return request<{ status: string; worldName: string }>(

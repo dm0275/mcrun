@@ -697,6 +697,21 @@ button.danger {
   background: transparent;
 }
 
+.inline-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
 /* Badges */
 .status-badge {
   display: inline-block;
