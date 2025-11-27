@@ -154,6 +154,15 @@ func (s *Server) handleServerByName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(parts) == 2 && action == "rcon" {
+		if r.Method != http.MethodPost {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		s.handleRconCommand(w, r, worldName)
+		return
+	}
+
 	writeError(w, http.StatusNotFound, "unknown server action")
 }
 
@@ -443,6 +452,62 @@ func (s *Server) handleUpdateServer(w http.ResponseWriter, r *http.Request, worl
 		"worldName": worldName,
 		"status":    "updated",
 		"metadata":  updatedMeta,
+	})
+}
+
+func (s *Server) handleRconCommand(w http.ResponseWriter, r *http.Request, worldName string) {
+	defer r.Body.Close()
+
+	var payload struct {
+		Command string `json:"command"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<15)).Decode(&payload); err != nil || strings.TrimSpace(payload.Command) == "" {
+		writeError(w, http.StatusBadRequest, "command is required")
+		return
+	}
+
+	mcRunDir, err := minecraft.McRunHomeDir()
+	if err != nil {
+		s.logger.Printf("failed to resolve mcrun home: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to load server metadata")
+		return
+	}
+
+	rootDir := filepath.Join(mcRunDir, worldName)
+	meta, err := minecraft.LoadServerMetadata(rootDir)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			writeError(w, http.StatusNotFound, fmt.Sprintf("server %s not found", worldName))
+			return
+		}
+		s.logger.Printf("failed to load metadata: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to load server metadata")
+		return
+	}
+
+	if !meta.EnableRcon {
+		writeError(w, http.StatusBadRequest, "RCON is not enabled for this server")
+		return
+	}
+
+	rconPort := strings.TrimSpace(meta.RconPort)
+	if rconPort == "" {
+		rconPort = "25575"
+	}
+	rconPassword := strings.TrimSpace(meta.RconPassword)
+	if rconPassword == "" {
+		rconPassword = "minecraft"
+	}
+
+	resp, err := minecraft.SendRconCommand("127.0.0.1", rconPort, rconPassword, payload.Command)
+	if err != nil {
+		s.logger.Printf("rcon command failed: %v", err)
+		writeError(w, http.StatusBadGateway, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"response": resp,
 	})
 }
 

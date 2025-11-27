@@ -13,6 +13,7 @@ import {
   updateServer,
   startServer,
   stopServer,
+  sendRconCommand,
 } from './api';
 import './App.css';
 
@@ -1064,6 +1065,17 @@ function ServerDetailModal({ server, onClose }: { server: ServerInfo; onClose: (
   const meta = server.metadata;
   const statusClass = server.status === 'running' ? 'status-running' : server.status === 'stopped' ? 'status-stopped' : 'status-unknown';
   const modsDisplay = formatMods(meta?.mods);
+  const [command, setCommand] = useState('');
+  const [lastResponse, setLastResponse] = useState<string | null>(null);
+
+  const rconMutation = useMutation({
+    mutationFn: (cmd: string) => sendRconCommand(server.worldName, cmd),
+    onSuccess: (data) => {
+      setLastResponse(data.response || '(no response)');
+    },
+  });
+
+  const rconDisabled = !meta?.enableRcon;
 
   return (
     <Modal onClose={onClose} ariaLabel={`Details for server ${server.worldName}`}>
@@ -1110,16 +1122,63 @@ function ServerDetailModal({ server, onClose }: { server: ServerInfo; onClose: (
         </p>
       </div>
       <div className="detail-card wide">
-        <p className="muted">RCON Console (coming soon)</p>
-        <div className="rcon-placeholder">
-          <textarea
-            placeholder="Type RCON commands here (disabled until RCON wiring is added)"
-            disabled
-          />
-          <button type="button" className="btn-secondary" disabled>
-            Send command
-          </button>
+        <div className="rcon-header">
+          <div>
+            <p className="muted">RCON Console</p>
+            <p className="muted small-text">
+              {rconDisabled
+                ? 'Enable RCON on this server to send commands.'
+                : 'Commands execute on the running server.'}
+            </p>
+          </div>
+          {rconDisabled && <span className="pill">Disabled</span>}
         </div>
+        <form
+          className="rcon-placeholder"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!command.trim() || rconDisabled) return;
+            setLastResponse(null);
+            rconMutation.mutate(command.trim());
+          }}
+        >
+          <textarea
+            placeholder={
+              rconDisabled
+                ? 'RCON is disabled for this server.'
+                : 'Type an RCON command, e.g., time set day'
+            }
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            disabled={rconDisabled || rconMutation.isPending}
+          />
+          <button
+            type="submit"
+            className="btn-secondary"
+            disabled={rconDisabled || rconMutation.isPending || !command.trim()}
+          >
+            {rconMutation.isPending ? (
+              <>
+                <span className="spinner-small"></span>
+                Sending…
+              </>
+            ) : (
+              <>
+                <span>📡</span>
+                Send command
+              </>
+            )}
+          </button>
+        </form>
+        {rconMutation.isError && (
+          <p className="error">Failed to run command: {(rconMutation.error as Error).message}</p>
+        )}
+        {lastResponse !== null && (
+          <div className="rcon-response">
+            <p className="muted">Response</p>
+            <pre>{lastResponse || '(empty response)'}</pre>
+          </div>
+        )}
       </div>
     </Modal>
   );

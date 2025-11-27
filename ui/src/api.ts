@@ -77,6 +77,9 @@ export interface ServerMetadata {
   maxMemory?: string;
   minMemory?: string;
   mods?: ModSpec[];
+  enableRcon?: boolean;
+  rconPort?: string;
+  rconPassword?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -146,6 +149,13 @@ export function updateServer(payload: UpdateServerPayload) {
       body: JSON.stringify(body),
     },
   );
+}
+
+export function sendRconCommand(worldName: string, command: string) {
+  return request<{ response: string }>(`/servers/${encodeURIComponent(worldName)}/rcon`, {
+    method: 'POST',
+    body: JSON.stringify({ command }),
+  });
 }
 
 function parseModSpecifier(spec: string) {

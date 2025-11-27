@@ -673,6 +673,30 @@ button.danger {
   font-size: 0.85rem;
 }
 
+.rcon-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rcon-response {
+  margin-top: 0.75rem;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+
+.rcon-response pre {
+  margin: 0.25rem 0 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  color: #e2e8f0;
+  background: transparent;
+}
+
 /* Badges */
 .status-badge {
   display: inline-block;
