@@ -68,6 +68,7 @@ export default function App() {
   const queryClient = useQueryClient();
   const [portError, setPortError] = useState<string | null>(null);
   const [manifestError, setManifestError] = useState<string | null>(null);
+  const [selectedServer, setSelectedServer] = useState<ServerInfo | null>(null);
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -381,6 +382,7 @@ export default function App() {
                 <ServerRow
                   key={server.worldName}
                   server={server}
+                  onSelect={() => setSelectedServer(server)}
                   onStart={() => startMutation.mutate(server.worldName)}
                   onStop={() => stopMutation.mutate(server.worldName)}
                   onDelete={() => deleteMutation.mutate(server.worldName)}
@@ -440,12 +442,19 @@ export default function App() {
           )}
         </div>
       </section>
+      {selectedServer && (
+        <ServerDetailModal
+          server={selectedServer}
+          onClose={() => setSelectedServer(null)}
+        />
+      )}
     </main>
   );
 }
 
 interface ServerRowProps {
   server: ServerInfo;
+  onSelect: () => void;
   onStart: () => void;
   onStop: () => void;
   onDelete: () => void;
@@ -467,6 +476,7 @@ interface ServerRowProps {
 
 function ServerRow({
   server,
+  onSelect,
   onStart,
   onStop,
   onDelete,
@@ -635,7 +645,18 @@ function ServerRow({
 
   return (
     <>
-      <div className="server-table__row">
+      <div
+        className="server-table__row server-table__row--clickable"
+        onClick={onSelect}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+      >
         <span>
           <strong className="world-name">{server.worldName}</strong>
         </span>
@@ -649,7 +670,10 @@ function ServerRow({
           <button
             type="button"
             className="icon-button play"
-            onClick={onStart}
+            onClick={(e) => {
+              e.stopPropagation();
+              onStart();
+            }}
             disabled={startDisabled}
             title={startTitle}
           >
@@ -658,7 +682,10 @@ function ServerRow({
         <button
           type="button"
           className="icon-button"
-          onClick={onStop}
+          onClick={(e) => {
+            e.stopPropagation();
+            onStop();
+          }}
             disabled={stopBusy}
             title="Stop server"
         >
@@ -667,7 +694,10 @@ function ServerRow({
         <button
           type="button"
           className="icon-button"
-          onClick={handleOpenEdit}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleOpenEdit();
+          }}
           disabled={updateBusy}
           title="Edit server config"
         >
@@ -676,7 +706,10 @@ function ServerRow({
         <button
           type="button"
           className="icon-button danger"
-          onClick={() => setConfirmDeleteOpen(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setConfirmDeleteOpen(true);
+          }}
           disabled={deleteBusy}
           title="Delete server"
         >
@@ -1025,6 +1058,71 @@ function slugifyWorldName(name: string): string {
   }
   const slug = trimmed.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
   return slug || trimmed;
+}
+
+function ServerDetailModal({ server, onClose }: { server: ServerInfo; onClose: () => void }) {
+  const meta = server.metadata;
+  const statusClass = server.status === 'running' ? 'status-running' : server.status === 'stopped' ? 'status-stopped' : 'status-unknown';
+  const modsDisplay = formatMods(meta?.mods);
+
+  return (
+    <Modal onClose={onClose} ariaLabel={`Details for server ${server.worldName}`}>
+      <div className="modal-header">
+        <div>
+          <p className="modal-eyebrow">Server details</p>
+          <h3 className="modal-title">{server.worldName}</h3>
+          <p className="muted small-text">Click anywhere outside to close.</p>
+        </div>
+        <button type="button" className="icon-button" onClick={onClose} aria-label="Close">
+          {CloseIcon}
+        </button>
+      </div>
+      <div className="server-detail-grid">
+        <div className="detail-card">
+          <p className="muted">Status</p>
+          <div className={`status-badge ${statusClass}`}>{server.status ?? 'unknown'}</div>
+        </div>
+        <div className="detail-card">
+          <p className="muted">Type</p>
+          <span className={`type-badge type-${meta?.type ?? 'unknown'}`}>{meta?.type ?? '—'}</span>
+        </div>
+        <div className="detail-card">
+          <p className="muted">Version</p>
+          <p className="detail-value">{meta?.version ?? '—'}</p>
+        </div>
+        <div className="detail-card">
+          <p className="muted">Port</p>
+          <p className="detail-value">{meta?.port ?? '25565'}</p>
+        </div>
+        <div className="detail-card">
+          <p className="muted">Compose file</p>
+          <p className="detail-value">{server.hasCompose ? 'Available' : 'Missing'}</p>
+        </div>
+        <div className="detail-card">
+          <p className="muted">Memory</p>
+          <p className="detail-value">{meta?.maxMemory || meta?.minMemory || '—'}</p>
+        </div>
+      </div>
+      <div className="detail-card wide">
+        <p className="muted">Mods</p>
+        <p className="detail-value" title={modsDisplay.title || undefined}>
+          {modsDisplay.display}
+        </p>
+      </div>
+      <div className="detail-card wide">
+        <p className="muted">RCON Console (coming soon)</p>
+        <div className="rcon-placeholder">
+          <textarea
+            placeholder="Type RCON commands here (disabled until RCON wiring is added)"
+            disabled
+          />
+          <button type="button" className="btn-secondary" disabled>
+            Send command
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
 const MOD_DISPLAY_LIMIT = 6;
