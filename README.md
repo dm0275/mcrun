@@ -281,6 +281,14 @@ npm run dev   # starts Vite on http://localhost:5173
 
 Make sure the API (`./mcrun api --host 127.0.0.1 --port 8080`) is running so the UI can reach it via the dev server proxy (`/api` → `127.0.0.1:8080`).
 
+Or start both backend and frontend together from the repo root:
+
+```bash
+./scripts/dev.sh
+```
+
+Press `Ctrl+C` to terminate both processes cleanly.
+
 ### Building from Source
 
 #### Prerequisites
